@@ -38,9 +38,7 @@
     </div>
 </template>
 <script>
-import hierarchy from './components/moon-hierarchy/index.vue'
-
-import dataTree from './dataTree';
+import hierarchy from '@/components/moon-hierarchy/index.vue';
 export default {
     inheritAttrs: false,
     name: '',
@@ -55,12 +53,21 @@ export default {
             this.setWidthHeight();
         });
     },
-    mounted() {},
+    mounted() {
+        let _this = this;
+        fetch('https://www.1724956493.top/files/d3335980e04011ed91b4f7437d34c747/dataTree.js')
+            .then((response) => {
+                return response.text();
+            })
+            .then((data) => {
+                _this.treeData = eval(data);
+            });
+    },
     data() {
         return {
             mode: 'h',
             layout: 'bf',
-            treeData: dataTree,
+            treeData: [],
             width: 0,
             height: 0,
             config: {
