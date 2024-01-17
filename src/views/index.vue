@@ -7,23 +7,18 @@
                 <input type="radio" id="v" value="v" v-model="mode" />
                 <label for="v">垂直模式</label>
             </div>
-            <div v-if="mode == 'h'">
-                <input type="radio" id="h-lr" value="lr" v-model="layout" />
-                <label for="h-lr">左-右布局</label>
-                <input type="radio" id="h-rl" value="rl" v-model="layout" />
-                <label for="h-rl">右-左布局</label>
-                <input type="radio" id="h-bf" value="bf" v-model="layout" />
-                <label for="h-bf">蝴蝶布局</label>
+            <div class="item" v-if="mode == 'h'">
+                <div><input type="radio" id="h-lr" value="lr" v-model="layout" /> <label for="h-lr">左-右布局</label></div>
+                <div><input type="radio" id="h-rl" value="rl" v-model="layout" /> <label for="h-rl">右-左布局</label></div>
+                <div><input type="radio" id="h-bf" value="bf" v-model="layout" /> <label for="h-bf">蝴蝶布局</label></div>
             </div>
-            <div v-if="mode == 'v'">
-                <input type="radio" id="tb" value="tb" v-model="layout" />
-                <label for="tb">上-下布局</label>
-                <input type="radio" id="bt" value="bt" v-model="layout" />
-                <label for="bt">下-上布局</label>
-                <input type="radio" id="v-bf" value="bf" v-model="layout" />
-                <label for="v-bf">蝴蝶布局</label>
+            <div class="item" v-if="mode == 'v'">
+                <div><input type="radio" id="tb" value="tb" v-model="layout" /> <label for="tb">上-下布局</label></div>
+                <div><input type="radio" id="bt" value="bt" v-model="layout" /> <label for="bt">下-上布局</label></div>
+                <div><input type="radio" id="v-bf" value="bf" v-model="layout" /> <label for="v-bf">蝴蝶布局</label></div>
             </div>
         </div>
+        <div class="document"><a href="https://github.com/luna-lee/moon-hierarchy" target="_blank">文档地址</a></div>
         <hierarchy
             :mode="mode"
             :treeData="treeData"
@@ -134,5 +129,21 @@ export default {
 <style lang="scss">
 .pannel {
     position: absolute;
+    label {
+        cursor: pointer;
+    }
+    .item {
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        div {
+            padding: 5px;
+        }
+    }
+}
+.document {
+    position: absolute;
+    right: 10px;
 }
 </style>
