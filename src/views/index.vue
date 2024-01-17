@@ -38,9 +38,7 @@
     </div>
 </template>
 <script>
-// import hierarchy from './components/moon-hierarchy/index.vue'
-import hierarchy from 'moon-hierarchy';
-import 'moon-hierarchy/dist/moon-hierarchy.css';
+import hierarchy from './components/moon-hierarchy/index.vue'
 
 import dataTree from './dataTree';
 export default {
