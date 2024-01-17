@@ -1,0 +1,13 @@
+# Ignore artifacts:
+build
+
+# Ignore all HTML files:
+*.html
+
+/src/services/template.index.js
+.DS_Store
+/dist
+package-lock.json
+/node_modules
+/static
+/.idea/
