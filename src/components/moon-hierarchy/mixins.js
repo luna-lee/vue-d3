@@ -474,7 +474,7 @@ export default {
       })
     },
     async onClickFetchChildren(sourceData) {
-      if (sourceData._hasChildren) {
+      if (sourceData._hasChildren && !sourceData._loading) {
         try {
           this.setLoadingIcon(sourceData)
           await this.listener['clickFetchChildren']?.(sourceData)
