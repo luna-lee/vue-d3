@@ -45,6 +45,7 @@ module.exports = {
                             deleteFile.forEach((f) => {
                                 del(outputPath + '/' + f);
                             });
+                            fs.copySync(__dirname + '/src/components/moon-hierarchy/readme.md', __dirname + '/packages/readme.md');
                         }, 3000);
                     });
                 }
