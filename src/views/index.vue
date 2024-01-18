@@ -18,7 +18,10 @@
                 <div><input type="radio" id="v-bf" value="bf" v-model="layout" /> <label for="v-bf">蝴蝶布局</label></div>
             </div>
         </div>
-        <div class="document"><a href="https://github.com/luna-lee/moon-hierarchy" target="_blank">文档地址</a></div>
+        <div class="document">
+            <router-link to="/md-view" target="_blank">文档</router-link>
+            <a href="https://github.com/luna-lee/moon-hierarchy" target="_blank">github地址</a>
+        </div>
         <hierarchy
             :mode="mode"
             :treeData="treeData"
@@ -145,5 +148,7 @@ export default {
 .document {
     position: absolute;
     right: 10px;
+    display: flex;
+    gap: 20px;
 }
 </style>

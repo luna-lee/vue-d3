@@ -9,6 +9,7 @@
     "build:package": "vue-cli-service build --target lib src/components/moon-hierarchy/index.vue  --name moon-hierarchy   --dest packages/dist "
   },
   "dependencies": {
+    "@kangc/v-md-editor": "^1.7.12",
     "core-js": "^3.6.5",
     "d3": "^7.8.5",
     "moon-hierarchy": "^1.0.0",
