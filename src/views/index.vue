@@ -1,6 +1,6 @@
 <template>
     <div>
-        <forceVue />
+        <!-- <forceVue /> -->
         <hierarchyVue />
     </div>
 </template>

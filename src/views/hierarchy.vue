@@ -75,7 +75,7 @@ export default {
                 clickFetchChildren: (d) => {
                     return new Promise((r) => {
                         setTimeout(() => {
-                            d.children = [
+                            r([
                                 {
                                     id: '32323',
                                     name: '金融贷款余额test',
@@ -110,9 +110,14 @@ export default {
                                     id: '323232',
                                     name: '金融贷款余额test',
                                     code: '94580eccec9a23237b49e488c10f8fa70f9c2d'
+                                },
+                                {
+                                    id: '3333',
+                                    name: 'lv-2',
+                                    code: '94580eccec9a23237b49e488c10f8fa70f9c2d11',
+                                    pcode: '94580eccec9a23237b49e488c10f8fa70f9c2d'
                                 }
-                            ];
-                            r();
+                            ]);
                         }, 2000);
                     });
                 }
