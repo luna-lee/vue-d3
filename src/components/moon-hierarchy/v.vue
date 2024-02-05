@@ -42,8 +42,11 @@ export default {
             let nodeWidth = nodeconfig.nodeWidth;
             let nodeHeight = nodeconfig.nodeHeight;
 
-            let plusCircleWidth = (nodeconfig.plus.attrs?.r || 10) * 2; //plus宽度
-            nodeconfig.plus.attrs.r = plusCircleWidth / 2;
+            let plusCircleWidth = 0;
+            if (nodeconfig.plus.show) {
+                plusCircleWidth = (nodeconfig.plus.attrs?.r || 10) * 2; //plus宽度
+                nodeconfig.plus.attrs.r = plusCircleWidth / 2;
+            }
 
             let fontSize = nodeconfig.text.attrs['font-size'] || 16; //字体
             nodeconfig.text.attrs['font-size'] = fontSize;
@@ -182,6 +185,7 @@ export default {
                 nodeWidth,
                 nodeSize: [nodeWidth, nodeHeight * 2],
                 separation,
+                plusCircleWidth,
                 shaps: [
                     ...(nodeconfig.rect.show ? [rectShap] : []),
                     ...(nodeconfig.text.show ? [textShap] : []),
@@ -310,8 +314,8 @@ export default {
             const x = (d) => d.data._nodeWidth / 2 - this.defsNodeConfig.loadingSize / 2;
             const y = (d) =>
                 d.data._sign == 1
-                    ? this.nodeConfig.nodeHeight + this.defsNodeConfig.loadingSize
-                    : -this.defsNodeConfig.loadingSize;
+                    ? this.nodeConfig.nodeHeight + this.nodeConfig.plusCircleWidth
+                    : -this.defsNodeConfig.loadingSize - this.nodeConfig.plusCircleWidth;
 
             if (flag) {
                 source._loading = flag;
