@@ -160,7 +160,7 @@ export default {
             let mapObj = {};
             function iterator(arr) {
                 arr.forEach((item) => {
-                    if (item.attrs.class) {
+                    if (item.attrs?.class) {
                         mapObj[item.attrs.class] = item;
                     }
                     if (isNonEmptyArray(item.children)) {
