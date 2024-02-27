@@ -69,7 +69,10 @@ export default {
             width: 0,
             height: 0,
             config: {
-                node: {}
+                node: {},
+                arrow:{
+                    show:false
+                }
             },
             listener: {
                 clickFetchChildren: (d) => {

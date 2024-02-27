@@ -105,7 +105,7 @@ export default {
                 'stroke-width': '1',
                 ...(this.config?.link || {}),
                 class: 'moon-hierarchy-link',
-                'marker-end': 'url(#arrow)'
+                'marker-end': this.config?.arrow?.show === false ? 'none' : 'url(#arrow)'
             };
         },
         defsNodeConfig() {
