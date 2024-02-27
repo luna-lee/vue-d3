@@ -130,8 +130,7 @@ export default {
                             {
                                 name: 'path',
                                 attrs: {
-                                    d: 'M 0 0 L 10 5 L 0 10 z',
-                                    ...(this.config.arrow?.path?.attrs || {})
+                                    d: this.config.arrow?.path || 'M 0 0 L 10 5 L 0 10 z'
                                 }
                             }
                         ]
