@@ -302,13 +302,13 @@ export default {
                     this.onNodeClick(item);
                     this.listener['click']?.(item);
                 })
-                    .on('mouseover', () => {
+                    .on('mouseover', (_) => {
                         this.onNodeMouseOver(item);
-                        this.listener['mouseover']?.(item);
+                        this.listener['mouseover']?.(_, item);
                     })
-                    .on('mouseout', () => {
+                    .on('mouseout', (_) => {
                         this.onNodeMouseOut(item);
-                        this.listener['mouseout']?.(item);
+                        this.listener['mouseout']?.(_, item);
                     })
                     .transition()
                     .duration(this.duration)

@@ -48,9 +48,9 @@ export default {
                 separation: 1.5, //节点间距
                 exShaps: () => [], //额外图形
                 ...(this.config.node || {}),
-                rect: { attrs: {}, show: true, ...(this.config.node?.rect || {}) }, //矩形配置
-                text: { attrs: {}, show: true, ...(this.config.node?.text || {}) }, //文本配置
-                plus: { attrs: {}, show: true, ...(this.config.node?.plus || {}) } //图表配置
+                rect: { attrs: {}, show: true, on: {}, ...(this.config.node?.rect || {}) }, //矩形配置
+                text: { attrs: {}, show: true, on: {}, compose: {}, ...(this.config.node?.text || {}) }, //文本配置
+                plus: { attrs: {}, show: true, on: {}, ...(this.config.node?.plus || {}) } //图表配置
             };
             // padding格式化
             let padding = this.setPaddingFormat(nodeconfig.padding);
@@ -72,6 +72,7 @@ export default {
             let separation = nodeconfig.separation;
 
             let nameKey = this.inner_treeOptions.name;
+
             const rectShap = {
                 name: 'rect',
                 attrs: {
@@ -85,7 +86,8 @@ export default {
                     ...nodeconfig.rect.attrs,
                     height: nodeHeight,
                     width: (d) => d.data._nodeWidth
-                }
+                },
+                on: nodeconfig.rect.on
             };
             const textShap = {
                 name: 'text',
@@ -104,8 +106,10 @@ export default {
                 compose: {
                     text(d) {
                         return d.data._isexpend === undefined ? d.data[nameKey] : d.data._isexpend === true ? '收起' : '展开';
-                    }
-                }
+                    },
+                    ...nodeconfig.text.compose
+                },
+                on: nodeconfig.text.on
             };
             const plusShap = {
                 name: 'g',
@@ -130,6 +134,7 @@ export default {
                                 : padding(d.data)[3] - plusCircleWidth
                         },${nodeHeight / 2 + 1})`
                 },
+                on: nodeconfig.plus.on,
                 children: [
                     {
                         name: 'circle',

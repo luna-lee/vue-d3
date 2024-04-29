@@ -31,9 +31,9 @@ export default {
                 separation: 1.5, //节点间距
                 exShaps: () => [], //额外图形
                 ...(this.config?.node || {}),
-                rect: { attrs: {}, show: true, ...(this.config.node?.rect || {}) }, //矩形配置
-                text: { attrs: {}, show: true, ...(this.config.node?.text || {}) }, //文本配置
-                plus: { attrs: {}, show: true, ...(this.config.node?.plus || {}) } //图表配置
+                rect: { attrs: {}, show: true, on: {}, ...(this.config.node?.rect || {}) }, //矩形配置
+                text: { attrs: {}, show: true, on: {}, ...(this.config.node?.text || {}) }, //文本配置
+                plus: { attrs: {}, show: true, on: {}, ...(this.config.node?.plus || {}) } //图表配置
             };
 
             // padding格式化
@@ -72,7 +72,8 @@ export default {
                     ...nodeconfig.rect,
                     height: nodeHeight,
                     width: (d) => d.data._nodeWidth
-                }
+                },
+                on: nodeconfig.rect.on
             };
             const textShap = {
                 name: 'g',
@@ -82,6 +83,7 @@ export default {
                             nodeHeight / 2 - (d.data._name[1] ? (fontSize + lineHeight) / 2 : 0) //   若有第二行则向上偏移
                         })`
                 },
+                on: nodeconfig.text.on,
                 children: [
                     {
                         name: 'text',
@@ -144,6 +146,7 @@ export default {
                             (d.data._sign == 1 ? nodeHeight : 0) + (d.data._sign * plusCircleWidth) / 2
                         })`
                 },
+                on: nodeconfig.plus.on,
                 children: [
                     {
                         name: 'circle',

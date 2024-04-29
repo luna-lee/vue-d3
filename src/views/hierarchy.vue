@@ -32,6 +32,8 @@
             :config="config"
             :width="width"
             :height="height"
+            expendShape=".moon-hierarchy-plus"
+            foldShape=".moon-hierarchy-plus"
         ></hierarchy>
     </div>
 </template>
@@ -70,8 +72,8 @@ export default {
             height: 0,
             config: {
                 node: {},
-                arrow:{
-                    show:false
+                arrow: {
+                    show: false
                 }
             },
             listener: {
