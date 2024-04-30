@@ -32,8 +32,6 @@
             :config="config"
             :width="width"
             :height="height"
-            expendShape=".moon-hierarchy-plus"
-            foldShape=".moon-hierarchy-plus"
         ></hierarchy>
     </div>
 </template>
