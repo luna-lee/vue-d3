@@ -567,6 +567,9 @@ export default {
                 .zoom()
                 .scaleExtent(scaleRange)
                 .on('zoom', (e) => {
+                    if (this.config?.zoom?.callback) {
+                        this.config?.zoom?.callback(e)
+                    }
                     let zoom = e.transform;
                     this.currentScale = zoom.k;
                     this.container
