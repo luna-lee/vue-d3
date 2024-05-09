@@ -20,7 +20,7 @@ export default {
     created() {},
     async mounted() {
         let _this = this;
-        let res = await fetch('https://www.1724956493.top/files/d3335980e04011ed91b4f7437d34c747/dataTree.js').then(
+        let res = await fetch('https://www.fste.top/files/d3335980e04011ed91b4f7437d34c747/dataTree.js').then(
             (response) => {
                 return response.text();
             }
