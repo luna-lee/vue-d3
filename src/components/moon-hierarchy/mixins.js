@@ -298,9 +298,9 @@ export default {
                 const id = this.getNodeId(item.data[this.symbolKey]);
                 const node = d3.select(`#${id}`);
                 this.addListener(node, this.listener, this.exceptListener, item);
-                node.on('click', () => {
+                node.on('click', (_) => {
                     this.onNodeClick(item);
-                    this.listener['click']?.(item);
+                    this.listener['click']?.(_, item);
                 })
                     .on('mouseover', (_) => {
                         this.onNodeMouseOver(item);
@@ -568,7 +568,7 @@ export default {
                 .scaleExtent(scaleRange)
                 .on('zoom', (e) => {
                     if (this.config?.zoom?.callback) {
-                        this.config?.zoom?.callback(e)
+                        this.config?.zoom?.callback(e);
                     }
                     let zoom = e.transform;
                     this.currentScale = zoom.k;
