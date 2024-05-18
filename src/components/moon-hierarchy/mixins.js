@@ -258,7 +258,10 @@ export default {
                 .attr('class', (d) => {
                     let classNaem = 'moon-hierarchy-node';
                     if (d.data.track.length == 1) classNaem += ' moon-hierarchy-node-root';
-                    if (typeof d.data._isexpend == 'boolean') classNaem += ' moon-hierarchy-expend-button';
+                    if (typeof d.data._isexpend == 'boolean') classNaem += ' moon-hierarchy-node-limit-button';
+                    if (d.data.children) classNaem += ' moon-hierarchy-node-expend';
+                    if (isNonEmptyArray(d.data.children) || isNonEmptyArray(d.data._children) || d.data._hasChildren)
+                        classNaem += ' moon-hierarchy-node-haschildren';
                     return classNaem;
                 })
                 .attr('cursor', 'pointer')
@@ -397,13 +400,17 @@ export default {
             const symbolKey = this.symbolKey;
             this.lastClickNode = d;
             const sourceData = this.treeDataFactory.objById[this.lastClickNode.data[symbolKey]];
+
+            const node = d3.select(`#${this.getNodeId(d.data[this.symbolKey])}`);
             if (expend) {
                 // 展开
                 if (isNonEmptyArray(sourceData._children)) {
+                    node.classed('moon-hierarchy-node-expend', true);
                     sourceData.children = sourceData._children;
                     sourceData._children = undefined;
                 } else {
                     if (sourceData._hasChildren) {
+                        node.classed('moon-hierarchy-node-expend', true);
                         await this.onClickFetchChildren(sourceData);
                         // 动态新增的节点，从新计算限制值
                         this.setLimtNode && this.setLimtNode();
@@ -412,6 +419,7 @@ export default {
             }
             // 收起
             else if (isNonEmptyArray(sourceData.children)) {
+                node.classed('moon-hierarchy-node-expend', false);
                 sourceData._children = sourceData.children;
                 sourceData.children = undefined;
             }

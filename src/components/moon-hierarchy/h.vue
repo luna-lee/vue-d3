@@ -77,8 +77,6 @@ export default {
                 name: 'rect',
                 attrs: {
                     class: 'moon-hierarchy-rect',
-                    stroke: 'rgb(216, 216, 216)',
-                    'stroke-width': '0.5',
                     ...nodeconfig.rect.attrs,
                     height: nodeHeight,
                     width: (d) => d.data._nodeWidth
@@ -101,11 +99,6 @@ export default {
                 name: 'text',
                 attrs: {
                     class: 'moon-hierarchy-text',
-                    fill: (d) => {
-                        if (d.data.track.length == 1) return '#fff';
-                        else if (isNonEmptyArray(d.data.children)) return 'rgb(18, 139, 237)';
-                        else return 'rgb(51, 51, 51)';
-                    },
                     ...nodeconfig.text.attrs,
                     'font-size': fontSize,
                     y: fontSize + paddingList[0],
@@ -123,18 +116,7 @@ export default {
                 name: 'g',
                 attrs: {
                     class: 'moon-hierarchy-plus',
-                    stroke: 'rgb(153, 153, 153)',
-                    fill: 'rgb(234, 242, 255)',
-                    'stroke-width': 1,
                     ...nodeconfig.plus.attrs,
-                    display: (d) => {
-                        if (
-                            (!isNonEmptyArray(d.data.children) && !isNonEmptyArray(d.data._children) && !d.data._hasChildren) ||
-                            d.data.track.length == 1
-                        ) {
-                            return 'none';
-                        }
-                    },
                     transform: (d) =>
                         `translate(${
                             d.data._sign == 1
@@ -162,12 +144,6 @@ export default {
                     {
                         name: 'line',
                         attrs: {
-                            class: 'moon-hierarchy-plus-line2',
-                            display: (d) => {
-                                if (isNonEmptyArray(d.data.children)) {
-                                    return 'none';
-                                }
-                            },
                             x1: '0',
                             y1: -plusCircleWidth / 4,
                             x2: '0',

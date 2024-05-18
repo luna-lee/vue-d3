@@ -63,8 +63,6 @@ export default {
                 name: 'rect',
                 attrs: {
                     class: 'moon-hierarchy-rect',
-                    stroke: 'rgb(216, 216, 216)',
-                    'stroke-width': '0.5',
                     ...nodeconfig.rect,
                     height: nodeHeight,
                     width: (d) => d.data._nodeWidth
@@ -98,11 +96,6 @@ export default {
                         name: 'text',
                         attrs: {
                             class: 'moon-hierarchy-text',
-                            fill: (d) => {
-                                if (d.data.track.length == 1) return '#fff';
-                                else if (isNonEmptyArray(d.data.children)) return 'rgb(18, 139, 237)';
-                                else return 'rgb(51, 51, 51)';
-                            },
                             ...nodeconfig.text,
                             'font-size': fontSize,
                             'text-anchor': 'middle',
@@ -138,18 +131,7 @@ export default {
                 name: 'g',
                 attrs: {
                     class: 'moon-hierarchy-plus',
-                    stroke: 'rgb(153, 153, 153)',
-                    fill: ' rgb(234, 242, 255)',
-                    'stroke-width': 1,
                     ...nodeconfig.plus,
-                    display: (d) => {
-                        if (
-                            (!isNonEmptyArray(d.data.children) && !isNonEmptyArray(d.data._children) && !d.data._hasChildren) ||
-                            d.data.track.length == 1
-                        ) {
-                            return 'none';
-                        }
-                    },
                     transform: (d) =>
                         `translate(${d.data._nodeWidth / 2},${
                             (d.data._sign == 1 ? nodeHeight : 0) + (d.data._sign * plusCircleWidth) / 2
@@ -175,12 +157,6 @@ export default {
                     {
                         name: 'line',
                         attrs: {
-                            class: 'moon-hierarchy-plus-line2',
-                            display: (d) => {
-                                if (isNonEmptyArray(d.data.children)) {
-                                    return 'none';
-                                }
-                            },
                             x1: '0',
                             y1: -plusCircleWidth / 4,
                             x2: '0',

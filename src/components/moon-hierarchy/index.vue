@@ -37,20 +37,62 @@ export default {
 </script>
 <style lang="scss">
 .moon-hierarchy-node {
+    // 默认rect样式
     .moon-hierarchy-rect {
         fill: #fff;
+        stroke: rgb(216, 216, 216);
+        stroke-width: 0.5;
     }
+    // 默认text样式
+    .moon-hierarchy-text {
+        fill: rgb(51, 51, 51);
+    }
+    // 默认plus样式
+    .moon-hierarchy-plus {
+        stroke: rgb(153, 153, 153);
+        fill: rgb(234, 242, 255);
+        stroke-width: 1;
+    }
+    // 根节点样式
     &.moon-hierarchy-node-root {
         .moon-hierarchy-rect {
             fill: rgb(18, 137, 239);
         }
+        .moon-hierarchy-text {
+            fill: #fff;
+        }
+        .moon-hierarchy-plus {
+            display: none;
+        }
     }
-    &.moon-hierarchy-expend-button {
+    // 没有子节点的样式
+    &:not(.moon-hierarchy-node-haschildren) {
+        .moon-hierarchy-plus {
+            display: none;
+        }
+    }
+    // 非根节点的节点展开后样式
+    &.moon-hierarchy-node-expend:not(.moon-hierarchy-node-root) {
+        .moon-hierarchy-text {
+            fill: rgb(18, 139, 237);
+        }
+    }
+    // 节点展开后样式
+    &.moon-hierarchy-node-expend {
+        .moon-hierarchy-plus {
+            line:nth-of-type(2) {
+                display: none;
+            }
+        }
+    }
+    //展开限制节点的按钮型节点样式
+    &.moon-hierarchy-node-limit-button {
         .moon-hierarchy-rect {
             fill: rgb(247, 247, 247);
         }
     }
-    &:not(.moon-hierarchy-expend-button):hover {
+    // 非展开限制节点的按钮型节点得节点鼠标悬停样式
+    &:not(.moon-hierarchy-node-limit-button):hover {
         .moon-hierarchy-rect {
             stroke: rgb(18, 137, 239);
         }
