@@ -78,11 +78,6 @@ export default {
                 attrs: {
                     class: 'moon-hierarchy-rect',
                     stroke: 'rgb(216, 216, 216)',
-                    fill: (d) => {
-                        if (d.data.track.length == 1) return '#128BED';
-                        else if (typeof d.data._isexpend == 'boolean') return 'rgb(247,247,247)';
-                        else return '#fff';
-                    },
                     'stroke-width': '0.5',
                     ...nodeconfig.rect.attrs,
                     height: nodeHeight,

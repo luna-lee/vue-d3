@@ -37,11 +37,29 @@ export default {
 </script>
 <style lang="scss">
 .moon-hierarchy-node {
+    .moon-hierarchy-rect {
+        fill: #fff;
+    }
+    &.moon-hierarchy-node-root {
+        .moon-hierarchy-rect {
+            fill: rgb(18, 137, 239);
+        }
+    }
+    &.moon-hierarchy-expend-button {
+        .moon-hierarchy-rect {
+            fill: rgb(247, 247, 247);
+        }
+    }
     &:not(.moon-hierarchy-expend-button):hover {
         .moon-hierarchy-rect {
             stroke: rgb(18, 137, 239);
         }
     }
+}
+.moon-hierarchy-link {
+    stroke: #d8d8d8;
+    stroke-opacity: 1;
+    stroke-width: 1;
 }
 .moon-hierarchy-node-hover-link {
     stroke-dasharray: 1000;

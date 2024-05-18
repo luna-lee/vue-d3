@@ -99,10 +99,7 @@ export default {
         },
         linkConifg() {
             return {
-                stroke: '#D8D8D8',
                 fill: 'none',
-                'stroke-opacity': '1',
-                'stroke-width': '1',
                 ...(this.config?.link || {}),
                 class: 'moon-hierarchy-link',
                 'marker-end': this.config?.arrow?.show === false ? 'none' : 'url(#arrow)'
@@ -258,11 +255,12 @@ export default {
                 .selectAll()
                 .data(nodeList)
                 .join('g')
-                .attr('class', (d) =>
-                    typeof d.data._isexpend == 'boolean'
-                        ? 'moon-hierarchy-node moon-hierarchy-expend-button'
-                        : 'moon-hierarchy-node'
-                )
+                .attr('class', (d) => {
+                    let classNaem = 'moon-hierarchy-node';
+                    if (d.data.track.length == 1) classNaem += ' moon-hierarchy-node-root';
+                    if (typeof d.data._isexpend == 'boolean') classNaem += ' moon-hierarchy-expend-button';
+                    return classNaem;
+                })
                 .attr('cursor', 'pointer')
                 .attr('id', (d) => getNodeId(d.data[symbolKey]))
                 .attr('transform', (d) => {
