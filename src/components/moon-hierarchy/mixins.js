@@ -271,15 +271,21 @@ export default {
                 })
                 .on('click', (_, d) => {
                     this.onNodeClick(d);
-                    this.listener['click']?.(_, d);
+                    const id = this.getNodeId(d.data[this.symbolKey]);
+                    const node = d3.select(`#${id}`);
+                    this.listener['click']?.(_, d, node, d3);
                 })
                 .on('mouseover', (_, d) => {
                     this.onNodeMouseOver(d);
-                    this.listener['mouseover']?.(_, d);
+                    const id = this.getNodeId(d.data[this.symbolKey]);
+                    const node = d3.select(`#${id}`);
+                    this.listener['mouseover']?.(_, d, node, d3);
                 })
                 .on('mouseout', (_, d) => {
                     this.onNodeMouseOut(d);
-                    this.listener['mouseout']?.(_, d);
+                    const id = this.getNodeId(d.data[this.symbolKey]);
+                    const node = d3.select(`#${id}`);
+                    this.listener['mouseout']?.(_, d, node, d3);
                 });
             this.addListener(nodes, this.listener, this.exceptListener);
             nodes
@@ -300,15 +306,15 @@ export default {
                 this.addListener(node, this.listener, this.exceptListener, item);
                 node.on('click', (_) => {
                     this.onNodeClick(item);
-                    this.listener['click']?.(_, item);
+                    this.listener['click']?.(_, item, node, d3);
                 })
                     .on('mouseover', (_) => {
                         this.onNodeMouseOver(item);
-                        this.listener['mouseover']?.(_, item);
+                        this.listener['mouseover']?.(_, item, node, d3);
                     })
                     .on('mouseout', (_) => {
                         this.onNodeMouseOut(item);
-                        this.listener['mouseout']?.(_, item);
+                        this.listener['mouseout']?.(_, item, node, d3);
                     })
                     .transition()
                     .duration(this.duration)
@@ -354,7 +360,7 @@ export default {
         },
         addListener(node, listener = {}, except = [], qd) {
             Object.keys(listener).forEach((key) => {
-                if (!except.includes(key)) node.on(key, (e, d) => listener[key](e, qd || d));
+                if (!except.includes(key)) node.on(key, (e, d) => listener[key](e, qd || d, node, d3));
             });
         },
         addOrUpdateNode() {
@@ -432,7 +438,7 @@ export default {
         onNodeMouseOver(d) {
             d.links().forEach((link) => {
                 const id = this.getLinkId(link.source.data[this.symbolKey], link.target.data[this.symbolKey]);
-                d3.select(`#${id}`).attr('class', 'moon-hierarchy-link-custom');
+                d3.select(`#${id}`).classed('moon-hierarchy-node-hover-link', true);
             });
         },
         onNodeMouseOut(d) {
@@ -440,14 +446,18 @@ export default {
                 const id = this.getLinkId(link.source.data[this.symbolKey], link.target.data[this.symbolKey]);
                 let line = d3.select(`#${id}`);
                 // 获取虚线的总长度
-                line.classed('moon-hierarchy-link-custom', false); // 过渡的持续时间，单位毫秒
+                line.classed('moon-hierarchy-node-hover-link', false); // 过渡的持续时间，单位毫秒
             });
         },
         async onClickFetchChildren(sourceData) {
             if (sourceData._hasChildren && !sourceData._loading) {
                 try {
                     this.setLoadingIcon(sourceData);
-                    let childrenList = await this.listener['clickFetchChildren']?.(sourceData);
+                    let childrenList = await this.listener['clickFetchChildren']?.(
+                        sourceData,
+                        d3.select(`#${this.getNodeId(sourceData[this.symbolKey])}`),
+                        d3
+                    );
                     if (Array.isArray(childrenList) && childrenList.length) {
                         let list = childrenList.map((v) => {
                             v._sign = sourceData._sign;

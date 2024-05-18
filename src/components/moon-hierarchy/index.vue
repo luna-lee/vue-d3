@@ -1,69 +1,65 @@
 <template>
-  <div>
-    <horizontal
-      v-if="mode == 'h'"
-      v-bind="$attrs"
-      v-on="$listeners"
-    ></horizontal>
-    <vertical v-else v-bind="$attrs" v-on="$listeners"></vertical>
-  </div>
+    <div>
+        <horizontal v-if="mode == 'h'" v-bind="$attrs" v-on="$listeners"></horizontal>
+        <vertical v-else v-bind="$attrs" v-on="$listeners"></vertical>
+    </div>
 </template>
 <script>
-import horizontal from './h.vue'
-import vertical from './v.vue'
+import horizontal from './h.vue';
+import vertical from './v.vue';
 
 export default {
-  inheritAttrs: false,
-  name: 'MoonHierarchy',
-  props: {
-    mode: {
-      type: String,
-      default: 'h', // h:horizontal,v: vertical
+    inheritAttrs: false,
+    name: 'MoonHierarchy',
+    props: {
+        mode: {
+            type: String,
+            default: 'h' // h:horizontal,v: vertical
+        }
     },
-  },
-  components: { horizontal, vertical },
-  created() {},
-  mounted() {},
-  data() {
-    return {}
-  },
-  watch: {},
-  computed: {},
-  methods: {},
-}
+    components: { horizontal, vertical },
+    created() {},
+    mounted() {},
+    data() {
+        return {};
+    },
+    watch: {},
+    computed: {},
+    methods: {}
+};
 </script>
 <style lang="scss">
 .moon-hierarchy-node {
-  &:not(.moon-hierarchy-expend-button):hover {
-    rect {
-      stroke: rgb(18, 137, 239) !important;
+    &:not(.moon-hierarchy-expend-button):hover {
+        .moon-hierarchy-rect {
+            stroke: rgb(18, 137, 239) ;
+        }
     }
-  }
 }
-.moon-hierarchy-link-custom {
-  stroke-dasharray: 1000;
-  stroke-dashoffset: 1000;
-  animation: moon-hierarchy-link-run 20s linear infinite;
+.moon-hierarchy-node-hover-link {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: moon-hierarchy-link-run 20s linear infinite;
 }
 .moon-hierarchy-loading {
-  animation: moon-hierarchy-rotate 3s linear infinite;
+    animation: moon-hierarchy-rotate 3s linear infinite;
 }
 @keyframes moon-hierarchy-rotate {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 @keyframes moon-hierarchy-link-run {
-  from {
-    stroke-dasharray: 10, 5;
-  }
-  to {
-    stroke-dasharray: 20, 5;
-  }
+    from {
+        stroke-dasharray: 10, 5;
+    }
+    to {
+        stroke-dasharray: 20, 5;
+    }
 }
 </style>
 <style lang="scss" scoped></style>

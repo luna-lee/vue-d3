@@ -75,7 +75,8 @@ export default {
                 }
             },
             listener: {
-                clickFetchChildren: (d) => {
+                clickFetchChildren: (data, node, d3) => {
+                    console.log(data, node, d3);
                     return new Promise((r) => {
                         setTimeout(() => {
                             r([
@@ -123,6 +124,9 @@ export default {
                             ]);
                         }, 2000);
                     });
+                },
+                click(e, d, node, d3) {
+                    // console.log(e, d, node, d3);
                 }
             }
         };

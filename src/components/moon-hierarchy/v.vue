@@ -62,6 +62,7 @@ export default {
             const rectShap = {
                 name: 'rect',
                 attrs: {
+                    class: 'moon-hierarchy-rect',
                     stroke: 'rgb(216, 216, 216)',
                     fill: (d) => {
                         if (d.data.track.length == 1) return '#128BED';
@@ -70,6 +71,19 @@ export default {
                     },
                     'stroke-width': '0.5',
                     ...nodeconfig.rect,
+                    height: nodeHeight,
+                    width: (d) => d.data._nodeWidth
+                }
+            };
+
+            // 最外层的rect，用于响应点击
+            const frontRectShap = {
+                name: 'rect',
+                attrs: {
+                    stroke: 'none',
+                    fill: 'black',
+                    'fill-opacity': 0,
+                    'stroke-width': '0',
                     height: nodeHeight,
                     width: (d) => d.data._nodeWidth
                 },
@@ -193,6 +207,7 @@ export default {
                     ...(nodeconfig.rect.show ? [rectShap] : []),
                     ...(nodeconfig.text.show ? [textShap] : []),
                     ...(nodeconfig.plus.show ? [plusShap] : []),
+                    ...(nodeconfig.rect.show ? [frontRectShap] : []),
                     ...nodeconfig.exShaps(nodeconfig)
                 ]
             };
