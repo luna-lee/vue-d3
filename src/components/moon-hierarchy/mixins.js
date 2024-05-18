@@ -603,6 +603,19 @@ export default {
                 return n;
             }, node);
         },
+        getNodeById(id) {
+            return { data: this.treeDataFactory.objById[id], el: d3.select(`#${this.getNodeId(id)}`) };
+        },
+        getAllNode() {
+            const idList = Object.keys(this.treeDataFactory.objById);
+            const nodeList = [];
+            for (let i = 0; i < idList.length; i++) {
+                const id = idList[i];
+                let data = this.treeDataFactory.objById[id];
+                if (typeof data._isexpend != 'boolean') nodeList.push({ data, el: d3.select(`#${this.getNodeId(id)}`) });
+            }
+            return nodeList;
+        },
         getNodeId(id) {
             return 'node-' + id;
         },

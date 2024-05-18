@@ -1,7 +1,7 @@
 <template>
     <div>
-        <horizontal v-if="mode == 'h'" v-bind="$attrs" v-on="$listeners"></horizontal>
-        <vertical v-else v-bind="$attrs" v-on="$listeners"></vertical>
+        <horizontal v-if="mode == 'h'" ref="MoonHierarchy" v-bind="$attrs" v-on="$listeners"></horizontal>
+        <vertical v-else ref="MoonHierarchy" v-bind="$attrs" v-on="$listeners"></vertical>
     </div>
 </template>
 <script>
@@ -25,14 +25,21 @@ export default {
     },
     watch: {},
     computed: {},
-    methods: {}
+    methods: {
+        getNodeById(id) {
+            return this.$refs.MoonHierarchy.getNodeById(id);
+        },
+        getAllNode() {
+            return this.$refs.MoonHierarchy.getAllNode();
+        }
+    }
 };
 </script>
 <style lang="scss">
 .moon-hierarchy-node {
     &:not(.moon-hierarchy-expend-button):hover {
         .moon-hierarchy-rect {
-            stroke: rgb(18, 137, 239) ;
+            stroke: rgb(18, 137, 239);
         }
     }
 }

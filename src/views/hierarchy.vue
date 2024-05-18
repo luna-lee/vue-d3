@@ -23,6 +23,7 @@
             <a href="https://github.com/luna-lee/moon-hierarchy" target="_blank">github地址</a>
         </div>
         <hierarchy
+            ref="hierarchy"
             :mode="mode"
             :treeData="treeData"
             :treeOptions="{ id: 'code', pId: 'pcode' }"
@@ -125,8 +126,9 @@ export default {
                         }, 2000);
                     });
                 },
-                click(e, d, node, d3) {
+                click: (e, d, node, d3) => {
                     // console.log(e, d, node, d3);
+                    console.log( this.$refs.hierarchy.getAllNode());
                 }
             }
         };
