@@ -31,6 +31,12 @@ export default {
         },
         getAllNode() {
             return this.$refs.MoonHierarchy.getAllNode();
+        },
+        moveToCenter() {
+            this.$refs.MoonHierarchy.moveToCenter(null);
+        },
+        zoom(scale) {
+            this.$refs.MoonHierarchy.scale(scale);
         }
     }
 };

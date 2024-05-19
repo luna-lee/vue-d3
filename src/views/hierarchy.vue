@@ -2,6 +2,12 @@
     <div>
         <div class="pannel">
             <div>
+                <button @click="$refs.hierarchy.moveToCenter()">移动到中心</button>
+                <button @click="$refs.hierarchy.zoom(1.5)">放大</button>
+                <button @click="$refs.hierarchy.zoom(0.5)">缩小</button>
+
+            </div>
+            <div style="margin-top: 10px">
                 <input type="radio" id="h" value="h" v-model="mode" />
                 <label for="h">水平模式</label>
                 <input type="radio" id="v" value="v" v-model="mode" />
@@ -128,7 +134,7 @@ export default {
                 },
                 click: (e, d, node, d3) => {
                     // console.log(e, d, node, d3);
-                    console.log( this.$refs.hierarchy.getAllNode());
+                    console.log(this.$refs.hierarchy.getAllNode());
                 }
             }
         };

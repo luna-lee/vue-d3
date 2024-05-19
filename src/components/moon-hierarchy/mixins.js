@@ -594,8 +594,18 @@ export default {
                         .attr('transform', `translate(${Number(zoom.x)},${zoom.y}) scale(${zoom.k})`);
                 });
 
-            //动画持续时间
+            //禁止双击缩放
             this.svg.call(this.zoom).on('dblclick.zoom', null);
+        },
+        // 手动缩放
+        scale(scale) {
+            if (typeof scale === 'number') {
+                this.currentScale = this.currentScale * Math.abs(scale);
+                let scaleRange = this.config?.zoom?.scaleRange || [0.2, 2];
+                if (this.currentScale < scaleRange[0]) this.currentScale = scaleRange[0];
+                if (this.currentScale > scaleRange[1]) this.currentScale = scaleRange[1];
+                this.moveToCenter();
+            } else throw '缩放参数必须数字';
         },
         setAttrByOpt(node, opt = {}) {
             Object.keys(opt).map((key) => {
