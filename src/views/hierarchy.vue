@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="document">
-            <router-link to="/md-view" target="_blank">文档</router-link>
+            <!-- <router-link to="/md-view" target="_blank">文档</router-link> -->
             <a href="https://github.com/luna-lee/moon-hierarchy" target="_blank">github地址</a>
         </div>
         <hierarchy

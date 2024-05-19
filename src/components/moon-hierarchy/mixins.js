@@ -259,7 +259,7 @@ export default {
                     let classNaem = 'moon-hierarchy-node';
                     if (d.data.track.length == 1) classNaem += ' moon-hierarchy-node-root';
                     if (typeof d.data._isexpend == 'boolean') classNaem += ' moon-hierarchy-node-limit-button';
-                    if (d.data.children) classNaem += ' moon-hierarchy-node-expend';
+                    if (isNonEmptyArray(d.data.children)) classNaem += ' moon-hierarchy-node-expend';
                     if (isNonEmptyArray(d.data.children) || isNonEmptyArray(d.data._children) || d.data._hasChildren)
                         classNaem += ' moon-hierarchy-node-haschildren';
                     return classNaem;
