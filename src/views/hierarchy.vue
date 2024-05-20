@@ -85,7 +85,9 @@ export default {
                                 },
                                 'font-size': 19,
                                 transform: (d) => {
-                                    return `translate(${d.data._nodeConfig.nodeWidth},${d.data._nodeConfig.nodeHeight / 2})`;
+                                    return d.data._sign == 1
+                                        ? `translate(${d.data._nodeConfig.nodeWidth},${d.data._nodeConfig.nodeHeight / 2 + 5})`
+                                        : `translate(-20,${d.data._nodeConfig.nodeHeight / 2 + 5})`;
                                 }
                             },
                             compose: {

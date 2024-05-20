@@ -45,6 +45,7 @@ export default {
                     return value;
                 },
                 nodeWidth: 60, //节点宽度
+                nodeHeight: 16,
                 separation: 1.5, //节点间距
                 exShaps: [], //额外图形
                 ...(this.config.node || {}),
@@ -63,8 +64,8 @@ export default {
             let fontFamily = nodeconfig.text.attrs['font-family'] || null; //字体
             nodeconfig.text.attrs['font-family'] = fontFamily;
 
-            let nodeHeight = fontSize + paddingList[0] + paddingList[2];
-            nodeconfig.nodeHeight = nodeHeight;
+            let nodeHeight = nodeconfig.nodeHeight + paddingList[0] + paddingList[2];
+
             let nodeWidth = nodeconfig.nodeWidth;
 
             nodeconfig.plus.attrs.r = plusCircleWidth / 2;
@@ -98,11 +99,14 @@ export default {
             const textShap = {
                 name: 'text',
                 attrs: {
-                    ...nodeconfig.text.attrs,
-                    class: (d) => this.setShapClass(d, 'text', nodeconfig),
                     'font-size': fontSize,
-                    y: fontSize + paddingList[0],
-                    x: (d) => padding(d.data)[3]
+                    transform: (d) => {
+                        // 字体文本实际高度
+                        let textH = fontSize + 4;
+                        return `translate(${padding(d.data)[3]},${(nodeHeight - textH) / 2 + fontSize})`;
+                    },
+                    ...nodeconfig.text.attrs,
+                    class: (d) => this.setShapClass(d, 'text', nodeconfig)
                 },
                 compose: {
                     text(d) {
@@ -122,7 +126,7 @@ export default {
                             d.data._sign == 1
                                 ? d.data._nodeConfig.nodeWidth - padding(d.data)[1] + plusCircleWidth
                                 : padding(d.data)[3] - plusCircleWidth
-                        },${nodeHeight / 2 + 1})`
+                        },${nodeHeight / 2})`
                 },
                 on: nodeconfig.plus.on,
                 children: [
@@ -434,11 +438,6 @@ export default {
             );
             let padding = this.nodeConfig.padding(item);
             return width + padding[1] + padding[3];
-            /*       const groupElement = document.getElementById('myNodeG')
-      const myNodeText = document.getElementById('myNodeText')
-      myNodeText.innerHTML = item.name
-      myNodeText.setAttribute('font-size', this.nodeConfig.fontSize)
-      return groupElement.getBBox().width + this.nodeConfig.padding * 2 */
         },
         setLoadingIcon(source, flag = true) {
             source._loading = flag;
