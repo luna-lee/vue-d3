@@ -37,6 +37,9 @@ export default {
         },
         zoom(scale) {
             this.$refs.MoonHierarchy.scale(scale);
+        },
+        addNode(targetNodeId, childrenNode) {
+            this.$refs.MoonHierarchy.addNodeToTargetNode(targetNodeId, childrenNode);
         }
     }
 };

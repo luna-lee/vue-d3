@@ -34,11 +34,6 @@ export default {
             type: Array,
             default: () => []
         },
-        //监听
-        listener: {
-            type: Object,
-            default: () => ({})
-        },
         config: {
             type: Object,
             default: () => ({})
@@ -83,6 +78,9 @@ export default {
         };
     },
     computed: {
+        nodeListener() {
+            return this.config?.node?.on || {};
+        },
         symbolKey() {
             return this.inner_treeOptions.id;
         },
@@ -165,6 +163,7 @@ export default {
                 .attr('width', this.width)
                 .attr('height', this.height)
                 .attr('cursor', 'move');
+            this.$emit('graph', this.svg);
         },
         createContainDom() {
             this.container = this.svg
@@ -239,22 +238,23 @@ export default {
                 .data(nodeList)
                 .join('g')
                 .on('click', (_, d) => {
+                    _.stopPropagation();
                     this.onNodeClick(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
                     const node = d3.select(`#${id}`);
-                    this.listener['click']?.(_, d, node, d3);
+                    this.nodeListener['click']?.(_, d, node, d3);
                 })
                 .on('mouseover', (_, d) => {
                     this.onNodeMouseOver(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
                     const node = d3.select(`#${id}`);
-                    this.listener['mouseover']?.(_, d, node, d3);
+                    this.nodeListener['mouseover']?.(_, d, node, d3);
                 })
                 .on('mouseout', (_, d) => {
                     this.onNodeMouseOut(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
                     const node = d3.select(`#${id}`);
-                    this.listener['mouseout']?.(_, d, node, d3);
+                    this.nodeListener['mouseout']?.(_, d, node, d3);
                 });
             //自定义属性，除了id与transform
             const customNodeAttrs = this.config.node?.attrs || {};
@@ -287,7 +287,7 @@ export default {
                 return _.attr(attr, nodeDefaultAttrs[attr]);
             }, nodes);
 
-            this.addListener(nodes, this.listener, this.exceptListener);
+            this.addListener(nodes, this.nodeListener, this.exceptListener);
             nodes
                 .transition()
                 .duration(this.duration)
@@ -303,18 +303,19 @@ export default {
                 let item = nodeList[i];
                 const id = this.getNodeId(item.data[this.symbolKey]);
                 const node = d3.select(`#${id}`);
-                this.addListener(node, this.listener, this.exceptListener, item);
+                this.addListener(node, this.nodeListener, this.exceptListener, item);
                 node.on('click', (_) => {
+                    _.stopPropagation();
                     this.onNodeClick(item);
-                    this.listener['click']?.(_, item, node, d3);
+                    this.nodeListener['click']?.(_, item, node, d3);
                 })
                     .on('mouseover', (_) => {
                         this.onNodeMouseOver(item);
-                        this.listener['mouseover']?.(_, item, node, d3);
+                        this.nodeListener['mouseover']?.(_, item, node, d3);
                     })
                     .on('mouseout', (_) => {
                         this.onNodeMouseOut(item);
-                        this.listener['mouseout']?.(_, item, node, d3);
+                        this.nodeListener['mouseout']?.(_, item, node, d3);
                     })
                     .transition()
                     .duration(this.duration)
@@ -450,11 +451,63 @@ export default {
                 line.classed('moon-hierarchy-node-hover-link', false); // 过渡的持续时间，单位毫秒
             });
         },
+        // 向目标节点添加子节点，childrenList是一个扁平化的树数据
+        addNodeToTargetNode(targetNodeId, childrenList) {
+            const sourceData = this.treeDataFactory.objById[targetNodeId];
+            const node = d3.select(`#${this.getNodeId(targetNodeId)}`);
+            node.classed('moon-hierarchy-node-expend', true);
+            try {
+                if (Array.isArray(childrenList) && childrenList.length) {
+                    let list = childrenList.map((v) => {
+                        v._sign = sourceData._sign;
+                        // 没有设置pid的自动设置当前的pid
+                        if (!v[this.inner_treeOptions.pId]) v[this.inner_treeOptions.pId] = sourceData[this.symbolKey];
+                        return v;
+                    });
+                    // 判断是否有当前数据的列表
+                    let rootIndex = list.findIndex((v) => v[this.symbolKey] == sourceData[this.symbolKey]);
+                    //有则移除
+                    if (rootIndex != -1) list.splice(rootIndex, 1);
+                    const copySourceData = { ...sourceData };
+                    copySourceData.children = [];
+                    list.push(copySourceData);
+                    let { objById, flatData } = flatToTree(list, this.symbolKey, this.inner_treeOptions.pId);
+                    let sutTree = objById[sourceData[this.symbolKey]].children;
+                    if (sourceData._exChildren?.length) {
+                        // 展开节点
+                        let lastExpendNodeIndex = sourceData.children.findIndex(
+                            (v) => typeof v._isexpend == 'boolean' && v._sign == sourceData._sign
+                        );
+                        let lastExpendNode = sourceData.children[lastExpendNodeIndex];
+                        sourceData._exChildren.push(...sutTree);
+                        // 若处于展开状态，也要添加在children中,插入到展开按钮前
+                        if (lastExpendNode._isexpend) {
+                            sourceData.children.splice(lastExpendNodeIndex, 0, ...sutTree);
+                        }
+                    } else {
+                        if (sourceData.children) {
+                            sourceData.children.push(...sutTree);
+                        }
+                    }
+                    // 将新数据插入treeDataFactory中
+                    flatData
+                        .filter((v) => v[this.symbolKey] != sourceData[this.symbolKey])
+                        .forEach((v) => {
+                            let id = v[this.symbolKey];
+                            this.treeDataFactory.objById[id] = v;
+                            this.treeDataFactory.flatData.push(v);
+                        });
+                    this.drawView();
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        },
         async onClickFetchChildren(sourceData) {
             if (sourceData._hasChildren && !sourceData._loading) {
                 try {
                     this.setLoadingIcon(sourceData);
-                    let childrenList = await this.listener['clickFetchChildren']?.(
+                    let childrenList = await this.nodeListener['clickFetchChildren']?.(
                         sourceData,
                         d3.select(`#${this.getNodeId(sourceData[this.symbolKey])}`),
                         d3

@@ -5,6 +5,7 @@
                 <button @click="$refs.hierarchy.moveToCenter()">移动到中心</button>
                 <button @click="$refs.hierarchy.zoom(1.5)">放大</button>
                 <button @click="$refs.hierarchy.zoom(0.5)">缩小</button>
+                <button @click="addNew()">添加新节点</button>
             </div>
             <div style="margin-top: 10px">
                 <input type="radio" id="h" value="h" v-model="mode" />
@@ -34,10 +35,10 @@
             :treeOptions="{ id: 'code', pId: 'pcode' }"
             :layout="layout"
             :negativeIds="['qydak', 'root1', 'root2', 'root3']"
-            :listener="listener"
             :config="config"
             :width="width"
             :height="height"
+            @graph="getGraph"
         ></hierarchy>
     </div>
 </template>
@@ -76,6 +77,61 @@ export default {
             height: 0,
             config: {
                 node: {
+                    on: {
+                        clickFetchChildren: (data, node, d3) => {
+                            console.log(data, node, d3);
+                            return new Promise((r) => {
+                                setTimeout(() => {
+                                    r([
+                                        {
+                                            id: '32323',
+                                            name: '金融贷款余额test',
+                                            code: '980eccec9a23237b49e488c10f8fa70f9c2d'
+                                        },
+                                        {
+                                            id: '3233',
+                                            name: '金融贷款余额test',
+                                            code: '980444eccec9a23237b49e488c10f8fa70f9c2d'
+                                        },
+                                        {
+                                            id: '323243333',
+                                            name: '金融贷款余额test',
+                                            code: '1980eccec9a23237b49e488c10f8fa70f9c2d'
+                                        },
+                                        {
+                                            id: '323323',
+                                            name: '金融贷款余额test',
+                                            code: '2980eccec9a23237b49e488c10f8fa70f9c2d'
+                                        },
+                                        {
+                                            id: '323223',
+                                            name: '金融贷款余额test',
+                                            code: '3980eccec9a23237b49e488c10f8fa70f9c2d'
+                                        },
+                                        {
+                                            id: '323123',
+                                            name: '金融贷款余额test',
+                                            code: '480eccec9a23237b49e488c10f8fa70f9c2d'
+                                        },
+                                        {
+                                            id: '323232',
+                                            name: '金融贷款余额test',
+                                            code: '94580eccec9a23237b49e488c10f8fa70f9c2d'
+                                        },
+                                        {
+                                            id: '3333',
+                                            name: 'lv-2',
+                                            code: '94580eccec9a23237b49e488c10f8fa70f9c2d11',
+                                            pcode: '94580eccec9a23237b49e488c10f8fa70f9c2d'
+                                        }
+                                    ]);
+                                }, 2000);
+                            });
+                        },
+                        click: (e, d, node, d3) => {
+                            console.log(e, d, node, d3);
+                        }
+                    },
                     exShaps: [
                         {
                             name: 'text',
@@ -104,61 +160,6 @@ export default {
                 arrow: {
                     // show: false
                 }
-            },
-            listener: {
-                clickFetchChildren: (data, node, d3) => {
-                    console.log(data, node, d3);
-                    return new Promise((r) => {
-                        setTimeout(() => {
-                            r([
-                                {
-                                    id: '32323',
-                                    name: '金融贷款余额test',
-                                    code: '980eccec9a23237b49e488c10f8fa70f9c2d'
-                                },
-                                {
-                                    id: '3233',
-                                    name: '金融贷款余额test',
-                                    code: '980444eccec9a23237b49e488c10f8fa70f9c2d'
-                                },
-                                {
-                                    id: '323243333',
-                                    name: '金融贷款余额test',
-                                    code: '1980eccec9a23237b49e488c10f8fa70f9c2d'
-                                },
-                                {
-                                    id: '323323',
-                                    name: '金融贷款余额test',
-                                    code: '2980eccec9a23237b49e488c10f8fa70f9c2d'
-                                },
-                                {
-                                    id: '323223',
-                                    name: '金融贷款余额test',
-                                    code: '3980eccec9a23237b49e488c10f8fa70f9c2d'
-                                },
-                                {
-                                    id: '323123',
-                                    name: '金融贷款余额test',
-                                    code: '480eccec9a23237b49e488c10f8fa70f9c2d'
-                                },
-                                {
-                                    id: '323232',
-                                    name: '金融贷款余额test',
-                                    code: '94580eccec9a23237b49e488c10f8fa70f9c2d'
-                                },
-                                {
-                                    id: '3333',
-                                    name: 'lv-2',
-                                    code: '94580eccec9a23237b49e488c10f8fa70f9c2d11',
-                                    pcode: '94580eccec9a23237b49e488c10f8fa70f9c2d'
-                                }
-                            ]);
-                        }, 2000);
-                    });
-                },
-                click: (e, d, node, d3) => {
-                    console.log(e, d, node, d3);
-                }
             }
         };
     },
@@ -168,6 +169,23 @@ export default {
         setWidthHeight() {
             this.width = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth) - 10;
             this.height = (window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight) - 30;
+        },
+        addNew() {
+            this.$refs.hierarchy.addNode('root', [
+                {
+                    id: 'new' + new Date().getTime(),
+                    name: '企业信息' + 'new' + new Date().getTime(),
+                    code: 'new' + new Date().getTime(),
+                    modelType: '',
+                    domainId: '',
+                    pcode: 'root'
+                }
+            ]);
+        },
+        getGraph(svg) {
+            svg.on('click', () => {
+                console.log('这是画布');
+            });
         }
     }
 };
