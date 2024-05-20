@@ -29,7 +29,7 @@ export default {
                 nodeHeight: 68, //节点高度
                 lineHeight: 10, //字体行距
                 separation: 1.5, //节点间距
-                exShaps: () => [], //额外图形
+                exShaps: [], //额外图形
                 ...(this.config?.node || {}),
                 rect: { attrs: {}, show: true, on: {}, ...(this.config.node?.rect || {}) }, //矩形配置
                 text: { attrs: {}, show: true, on: {}, ...(this.config.node?.text || {}) }, //文本配置
@@ -62,10 +62,10 @@ export default {
             const rectShap = {
                 name: 'rect',
                 attrs: {
-                    class: 'moon-hierarchy-rect',
                     ...nodeconfig.rect,
+                    class: (d) => this.setShapClass(d, 'rect', nodeconfig),
                     height: nodeHeight,
-                    width: (d) => d.data._nodeWidth
+                    width: (d) => d.data._nodeConfig.nodeWidth
                 }
             };
 
@@ -78,7 +78,7 @@ export default {
                     'fill-opacity': 0,
                     'stroke-width': '0',
                     height: nodeHeight,
-                    width: (d) => d.data._nodeWidth
+                    width: (d) => d.data._nodeConfig.nodeWidth
                 },
                 on: nodeconfig.rect.on
             };
@@ -95,8 +95,8 @@ export default {
                     {
                         name: 'text',
                         attrs: {
-                            class: 'moon-hierarchy-text',
                             ...nodeconfig.text,
+                            class: (d) => this.setShapClass(d, 'text', nodeconfig),
                             'font-size': fontSize,
                             'text-anchor': 'middle',
                             'dominant-baseline': 'middle'
@@ -130,10 +130,10 @@ export default {
             const plusShap = {
                 name: 'g',
                 attrs: {
-                    class: 'moon-hierarchy-plus',
                     ...nodeconfig.plus,
+                    class: (d) => this.setShapClass(d, 'plus', nodeconfig),
                     transform: (d) =>
-                        `translate(${d.data._nodeWidth / 2},${
+                        `translate(${d.data._nodeConfig.nodeWidth / 2},${
                             (d.data._sign == 1 ? nodeHeight : 0) + (d.data._sign * plusCircleWidth) / 2
                         })`
                 },
@@ -179,7 +179,7 @@ export default {
                     ...(nodeconfig.text.show ? [textShap] : []),
                     ...(nodeconfig.plus.show ? [plusShap] : []),
                     ...(nodeconfig.rect.show ? [frontRectShap] : []),
-                    ...nodeconfig.exShaps(nodeconfig)
+                    ...nodeconfig.exShaps
                 ]
             };
         }
@@ -210,10 +210,10 @@ export default {
         },
         // 节点展开 动画
         onNodeExpendTranslate(d) {
-            if (!d) d = { x: 0, y: 0, data: { _nodeWidth: 0 } };
-            if (d.data._sign == 1) return `translate(${d.x - d.data._nodeWidth / 2},${d.y}) scale(1)`;
+            if (!d) d = { x: 0, y: 0, data: { _nodeConfig: { nodeWidth: 0 } } };
+            if (d.data._sign == 1) return `translate(${d.x - d.data._nodeConfig.nodeWidth / 2},${d.y}) scale(1)`;
             if (d.data._sign == -1) {
-                return `translate(${d.x - d.data._nodeWidth / 2},${-d.y}) scale(1)`;
+                return `translate(${d.x - d.data._nodeConfig.nodeWidth / 2},${-d.y}) scale(1)`;
             }
         },
         // 节点收起结束位置
@@ -272,7 +272,7 @@ export default {
         // 节点坐标到画布中央，转换规则
         nodeToCenterXY(node) {
             return {
-                x: node.x + node.data._nodeWidth / 2,
+                x: node.x + node.data._nodeConfig.nodeWidth / 2,
                 y: node.data._sign * node.y + this.nodeConfig.nodeHeight / 2
             };
         },
@@ -287,7 +287,7 @@ export default {
         addNodeWidthToData(list) {
             for (let i = 0; i < list.length; i++) {
                 let item = list[i];
-                item._nodeWidth = this.nodeConfig.nodeWidth;
+                item._nodeConfig = { ...this.nodeConfig, nodeWidth: this.nodeConfig.nodeWidth };
                 item['_' + this.inner_treeOptions.name] = this.getFormatTextArr(item);
                 if (isNonEmptyArray(item.children)) this.addNodeWidthToData(item.children);
             }
@@ -300,7 +300,7 @@ export default {
         },
         setLoadingIcon(source, flag = true) {
             const nodeId = this.getNodeId(source[this.symbolKey]);
-            const x = (d) => d.data._nodeWidth / 2 - this.defsNodeConfig.loadingSize / 2;
+            const x = (d) => d.data._nodeConfig.nodeWidth / 2 - this.defsNodeConfig.loadingSize / 2;
             const y = (d) =>
                 d.data._sign == 1
                     ? this.nodeConfig.nodeHeight + this.nodeConfig.plusCircleWidth

@@ -102,7 +102,7 @@ export default {
                 fill: 'none',
                 ...(this.config?.link || {}),
                 class: 'moon-hierarchy-link',
-                'marker-end': this.config?.arrow?.show === false ? 'none' : 'url(#arrow)'
+                'marker-end': this.config?.arrow?.show === false ? 'none' : 'url(#moon-hierarchy-arrow)'
             };
         },
         defsNodeConfig() {
@@ -118,10 +118,10 @@ export default {
                             refY: '5',
                             markerWidth: '6',
                             markerHeight: '6',
-                            fill: '#128BED',
                             orient: 'auto-start-reverse',
                             ...(this.config.arrow?.attrs || {}),
-                            id: 'arrow'
+                            id: 'moon-hierarchy-arrow',
+                            class: 'moon-hierarchy-arrow'
                         },
                         children: [
                             {
@@ -151,22 +151,6 @@ export default {
                     }
                 ]
             };
-        },
-        // 节点配置中有class属性的节点信息。组成一个map对象.他们都会在节点更新时，重新更新其属性。
-        needUpdataShapsByClassMap() {
-            let mapObj = {};
-            function iterator(arr) {
-                arr.forEach((item) => {
-                    if (item.attrs?.class) {
-                        mapObj[item.attrs.class] = item;
-                    }
-                    if (isNonEmptyArray(item.children)) {
-                        iterator(item.children);
-                    }
-                });
-            }
-            iterator(this.nodeConfig.shaps);
-            return mapObj;
         }
     },
     methods: {
@@ -250,26 +234,10 @@ export default {
                     .attr('stroke-linejoin', 'round')
                     .attr('stroke-width', 3)
                     .attr('class', 'moon-hierarchy-nodes');
-
             const nodes = this.nodesContainer
                 .selectAll()
                 .data(nodeList)
                 .join('g')
-                .attr('class', (d) => {
-                    let classNaem = 'moon-hierarchy-node';
-                    if (d.data.track.length == 1) classNaem += ' moon-hierarchy-node-root';
-                    if (typeof d.data._isexpend == 'boolean') classNaem += ' moon-hierarchy-node-limit-button';
-                    if (isNonEmptyArray(d.data.children)) classNaem += ' moon-hierarchy-node-expend';
-                    if (isNonEmptyArray(d.data.children) || isNonEmptyArray(d.data._children) || d.data._hasChildren)
-                        classNaem += ' moon-hierarchy-node-haschildren';
-                    return classNaem;
-                })
-                .attr('cursor', 'pointer')
-                .attr('id', (d) => getNodeId(d.data[symbolKey]))
-                .attr('transform', (d) => {
-                    // 初始位置
-                    return this.onNodeFoldTranslate(lastClickNode, d);
-                })
                 .on('click', (_, d) => {
                     this.onNodeClick(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
@@ -288,6 +256,37 @@ export default {
                     const node = d3.select(`#${id}`);
                     this.listener['mouseout']?.(_, d, node, d3);
                 });
+            //自定义属性，除了id与transform
+            const customNodeAttrs = this.config.node?.attrs || {};
+            // 默认节点属性
+            const nodeDefaultAttrs = {
+                cursor: 'pointer',
+                ...customNodeAttrs,
+                class: (d) => {
+                    let className = 'moon-hierarchy-node';
+                    if (d.data.track.length == 1) className += ' moon-hierarchy-node-root';
+                    if (typeof d.data._isexpend == 'boolean') className += ' moon-hierarchy-node-limit-button';
+                    if (isNonEmptyArray(d.data.children)) className += ' moon-hierarchy-node-expend';
+                    if (isNonEmptyArray(d.data.children) || isNonEmptyArray(d.data._children) || d.data._hasChildren)
+                        className += ' moon-hierarchy-node-haschildren';
+                    let classContent = customNodeAttrs.class;
+                    if (classContent) {
+                        if (typeof classContent == 'function') return `${className} ${classContent(d) || ''}`;
+                        if (typeof classContent == 'string') return `${className} ${classContent}`;
+                    }
+                    return className;
+                },
+                id: (d) => getNodeId(d.data[symbolKey]),
+                transform: (d) => {
+                    // 初始位置
+                    return this.onNodeFoldTranslate(lastClickNode, d);
+                }
+            };
+            // 设置节点属性
+            Object.keys(nodeDefaultAttrs).reduce((_, attr) => {
+                return _.attr(attr, nodeDefaultAttrs[attr]);
+            }, nodes);
+
             this.addListener(nodes, this.listener, this.exceptListener);
             nodes
                 .transition()
@@ -323,14 +322,10 @@ export default {
                         // 结束位置
                         return this.onNodeExpendTranslate(item);
                     });
-                // 更新节点配置中有class属性的节点信息。
-                Object.keys(this.needUpdataShapsByClassMap).forEach((keyClass) => {
-                    const { attrs, compose, on } = this.needUpdataShapsByClassMap[keyClass];
-                    const shapNode = node.select('.' + keyClass);
-                    this.setAttrByOpt(shapNode, attrs);
-                    this.addListener(shapNode, on);
-                    this.setComposeOpt(shapNode, compose);
-                });
+                // 移除所有形状
+                node.selectAll('*').remove();
+                // 重新添加形状
+                this.iteratorAddNode(node, this.nodeConfig.shaps);
                 this.addShapEexpendFold(node, item);
             }
         },
@@ -659,6 +654,16 @@ export default {
                 padding = paddingValue;
             }
             return padding;
+        },
+        // 设置默认图形上的class,配置相中自定以的class以追加的方式添加。
+        setShapClass(d, sharpName, nodeconfig) {
+            let classContent = nodeconfig[sharpName].attrs.class;
+            let defaultClass = `moon-hierarchy-${sharpName}`;
+            if (typeof classContent == 'function') return `${defaultClass} ${classContent(d) || ''}`;
+            if (typeof classContent == 'string' && classContent) {
+                return `${defaultClass} ${classContent}`;
+            }
+            return defaultClass;
         },
         // 获取字符串像素
         calculateTextWidth(text, fontSize, fontFamily) {

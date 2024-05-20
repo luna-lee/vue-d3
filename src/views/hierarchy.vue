@@ -5,7 +5,6 @@
                 <button @click="$refs.hierarchy.moveToCenter()">移动到中心</button>
                 <button @click="$refs.hierarchy.zoom(1.5)">放大</button>
                 <button @click="$refs.hierarchy.zoom(0.5)">缩小</button>
-
             </div>
             <div style="margin-top: 10px">
                 <input type="radio" id="h" value="h" v-model="mode" />
@@ -76,9 +75,32 @@ export default {
             width: 0,
             height: 0,
             config: {
-                node: {},
+                node: {
+                    exShaps: [
+                        {
+                            name: 'text',
+                            attrs: {
+                                fill: (d) => {
+                                    if (d.data.children?.length) return 'red';
+                                },
+                                'font-size': 19,
+                                transform: (d) => {
+                                    return `translate(${d.data._nodeConfig.nodeWidth},${d.data._nodeConfig.nodeHeight / 2})`;
+                                }
+                            },
+                            compose: {
+                                text(d) {
+                                    if (typeof d.data._isexpend == 'boolean') {
+                                        return d.data._isexpend ? '🤩' : '🤓';
+                                    }
+                                    return d.data?.children?.length ? '😝' : '😃';
+                                }
+                            }
+                        }
+                    ]
+                },
                 arrow: {
-                    show: false
+                    // show: false
                 }
             },
             listener: {
@@ -133,8 +155,7 @@ export default {
                     });
                 },
                 click: (e, d, node, d3) => {
-                    // console.log(e, d, node, d3);
-                    console.log(this.$refs.hierarchy.getAllNode());
+                    console.log(e, d, node, d3);
                 }
             }
         };

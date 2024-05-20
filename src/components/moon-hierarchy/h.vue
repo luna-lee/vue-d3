@@ -46,7 +46,7 @@ export default {
                 },
                 nodeWidth: 60, //节点宽度
                 separation: 1.5, //节点间距
-                exShaps: () => [], //额外图形
+                exShaps: [], //额外图形
                 ...(this.config.node || {}),
                 rect: { attrs: {}, show: true, on: {}, ...(this.config.node?.rect || {}) }, //矩形配置
                 text: { attrs: {}, show: true, on: {}, compose: {}, ...(this.config.node?.text || {}) }, //文本配置
@@ -76,10 +76,10 @@ export default {
             const rectShap = {
                 name: 'rect',
                 attrs: {
-                    class: 'moon-hierarchy-rect',
                     ...nodeconfig.rect.attrs,
+                    class: (d) => this.setShapClass(d, 'rect', nodeconfig),
                     height: nodeHeight,
-                    width: (d) => d.data._nodeWidth
+                    width: (d) => d.data._nodeConfig.nodeWidth
                 }
             };
             // 最外层的rect，用于响应点击
@@ -91,15 +91,15 @@ export default {
                     'fill-opacity': 0,
                     'stroke-width': '0',
                     height: nodeHeight,
-                    width: (d) => d.data._nodeWidth
+                    width: (d) => d.data._nodeConfig.nodeWidth
                 },
                 on: nodeconfig.rect.on
             };
             const textShap = {
                 name: 'text',
                 attrs: {
-                    class: 'moon-hierarchy-text',
                     ...nodeconfig.text.attrs,
+                    class: (d) => this.setShapClass(d, 'text', nodeconfig),
                     'font-size': fontSize,
                     y: fontSize + paddingList[0],
                     x: (d) => padding(d.data)[3]
@@ -115,12 +115,12 @@ export default {
             const plusShap = {
                 name: 'g',
                 attrs: {
-                    class: 'moon-hierarchy-plus',
                     ...nodeconfig.plus.attrs,
+                    class: (d) => this.setShapClass(d, 'plus', nodeconfig),
                     transform: (d) =>
                         `translate(${
                             d.data._sign == 1
-                                ? d.data._nodeWidth - padding(d.data)[1] + plusCircleWidth
+                                ? d.data._nodeConfig.nodeWidth - padding(d.data)[1] + plusCircleWidth
                                 : padding(d.data)[3] - plusCircleWidth
                         },${nodeHeight / 2 + 1})`
                 },
@@ -164,7 +164,7 @@ export default {
                     ...(nodeconfig.text.show ? [textShap] : []),
                     ...(nodeconfig.plus.show ? [plusShap] : []),
                     ...(nodeconfig.rect.show ? [frontRectShap] : []),
-                    ...nodeconfig.exShaps(nodeconfig)
+                    ...nodeconfig.exShaps
                 ]
             };
         }
@@ -283,10 +283,10 @@ export default {
 
         // 节点展开 动画
         onNodeExpendTranslate(d) {
-            if (!d) d = { x: 0, y: 0, data: { _nodeWidth: 0 } };
+            if (!d) d = { x: 0, y: 0, data: { _nodeConfig: { nodeWidth: 0 } } };
             if (d.data._sign == 1) return `translate(${d.y},${d.x}) scale(1)`;
             if (d.data._sign == -1) {
-                return `translate(${-d.y - d.data._nodeWidth + this.getTranslateOffset(d)},${d.x}) scale(1)`;
+                return `translate(${-d.y - d.data._nodeConfig.nodeWidth + this.getTranslateOffset(d)},${d.x}) scale(1)`;
             }
         },
         // 节点收起结束位置
@@ -295,7 +295,7 @@ export default {
                 return `translate(${0},${this.nodeConfig.nodeHeight / 2}) scale(0)`;
             }
             //收起时，起点是子节点，终点是点击的节点
-            return `translate(${(d.y + d.data._nodeWidth - this.getTranslateOffset(source)) * d.data._sign},${
+            return `translate(${(d.y + d.data._nodeConfig.nodeWidth - this.getTranslateOffset(source)) * d.data._sign},${
                 d.x + this.nodeConfig.nodeHeight / 2
             }) scale(0)`;
         },
@@ -333,7 +333,7 @@ export default {
         },
         setLinkPath({ source, target }) {
             let offsetY = this.nodeConfig.nodeHeight / 2;
-            let x0 = target.data._sign * (source.y + source.data._nodeWidth),
+            let x0 = target.data._sign * (source.y + source.data._nodeConfig.nodeWidth),
                 y0 = source.x + offsetY,
                 x1 = target.data._sign * target.y,
                 y1 = target.x + offsetY;
@@ -348,9 +348,9 @@ export default {
         nodeToCenterXY(node) {
             let x = 0;
             if (node.data._sign == 1) {
-                x = node.y + node.data._nodeWidth / 2;
+                x = node.y + node.data._nodeConfig.nodeWidth / 2;
             } else {
-                x = -node.y - node.data._nodeWidth / 2 + this.treeLayoutData.data._nodeWidth;
+                x = -node.y - node.data._nodeConfig.nodeWidth / 2 + this.treeLayoutData.data._nodeConfig.nodeWidth;
             }
             return {
                 x,
@@ -377,7 +377,7 @@ export default {
         addNodeWidthToData(list) {
             for (let i = 0; i < list.length; i++) {
                 let item = list[i];
-                item._nodeWidth = this.getNodeWidth(item);
+                item._nodeConfig = { ...this.nodeConfig, nodeWidth: this.getNodeWidth(item) };
                 if (isNonEmptyArray(item.children)) this.addNodeWidthToData(item.children);
             }
         },
@@ -391,9 +391,9 @@ export default {
                     if (isNonEmptyArray(item.children)) {
                         //  父节点中同层级中最大的nodeWidth 进行偏移
                         let maxNode = maxBy(findTreeSameLevelData(treeData, item), function (o) {
-                            return o._nodeWidth;
+                            return o._nodeConfig.nodeWidth;
                         });
-                        iterator(item.children, item.offset + maxNode._nodeWidth);
+                        iterator(item.children, item.offset + maxNode._nodeConfig.nodeWidth);
                     }
                 }
             }
@@ -422,7 +422,7 @@ export default {
 
         getTranslateOffset(d) {
             if (d.data._sign == -1 && d.data[this.symbolKey] != this.treeLayoutData.data[this.symbolKey])
-                return this.treeLayoutData.data._nodeWidth;
+                return this.treeLayoutData.data._nodeConfig.nodeWidth;
             return 0;
         },
 
@@ -443,7 +443,7 @@ export default {
         setLoadingIcon(source, flag = true) {
             source._loading = flag;
             const nodeId = this.getNodeId(source[this.symbolKey]);
-            const x = (d) => (d.data._sign == 1 ? d.data._nodeWidth : -this.defsNodeConfig.loadingSize);
+            const x = (d) => (d.data._sign == 1 ? d.data._nodeConfig.nodeWidth : -this.defsNodeConfig.loadingSize);
             const y = () => this.nodeConfig.nodeHeight / 2 - this.defsNodeConfig.loadingSize / 2;
             if (flag) {
                 const use = d3
