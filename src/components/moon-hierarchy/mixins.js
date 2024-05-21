@@ -74,7 +74,8 @@ export default {
             linksContainer: null,
             currentScale: 1,
             treeDataFactory: { treeData: [], leafs: [], objById: {}, flatData: [] },
-            exceptListener: ['click', 'clickFetchChildren', 'mouseover', 'mouseout']
+            exceptListener: ['click', 'clickFetchChildren', 'mouseover', 'mouseout'],
+            showCustomView: false
         };
     },
     computed: {
@@ -187,7 +188,8 @@ export default {
                 }
             );
             this.addDefs();
-            this.appendSvg();
+            // 挂载
+            this.$refs.svg.append(this.svg.node());
         },
         drawContainer() {
             // reset
@@ -200,7 +202,12 @@ export default {
             this.drawView();
             this.initZoom();
             this.moveToCenter();
+            this.$emit('draw-done', {
+                svg: this.svg,
+                container: this.container
+            });
         },
+
         defaultExpendLevel() {
             if (this.defaultOpenLevel > 0)
                 this.treeDataFactory.flatData.forEach((item) => {
@@ -223,10 +230,46 @@ export default {
                 this.treeLayoutData.children = [...(_positive?.children || []), ...(_negative?.children || [])];
             }
         },
-        addNode(nodeList) {
+        setNodeClassAttr(nodes) {
+            const customNodeAttrs = this.config.node?.attrs || {};
+            nodes.attr('class', (d) => {
+                let className = 'moon-hierarchy-node';
+                if (d.data.track.length == 1) className += ' moon-hierarchy-node-root';
+                if (typeof d.data._isexpend == 'boolean') className += ' moon-hierarchy-node-limit-button';
+                if (isNonEmptyArray(d.data.children)) className += ' moon-hierarchy-node-expend';
+                if (isNonEmptyArray(d.data.children) || isNonEmptyArray(d.data._children) || d.data._hasChildren)
+                    className += ' moon-hierarchy-node-haschildren';
+                let classContent = customNodeAttrs.class;
+                if (classContent) {
+                    if (typeof classContent == 'function') return `${className} ${classContent(d) || ''}`;
+                    if (typeof classContent == 'string') return `${className} ${classContent}`;
+                }
+                return className;
+            });
+        },
+        setNodeDefaultAttr(nodes) {
             const getNodeId = this.getNodeId;
             const symbolKey = this.symbolKey;
             const lastClickNode = this.lastClickNode;
+            const customNodeAttrs = this.config.node?.attrs || {};
+            // 默认节点属性
+            const nodeDefaultAttrs = {
+                cursor: 'pointer',
+                ...customNodeAttrs,
+                id: (d) => getNodeId(d.data[symbolKey]),
+                transform: (d) => {
+                    // 初始位置
+                    return this.onNodeFoldTranslate(lastClickNode, d);
+                }
+            };
+            // 设置节点属性
+            Object.keys(nodeDefaultAttrs).reduce((_, attr) => {
+                return _.attr(attr, nodeDefaultAttrs[attr]);
+            }, nodes);
+
+            this.setNodeClassAttr(nodes);
+        },
+        addNode(nodeList) {
             if (!this.nodesContainer)
                 this.nodesContainer = this.container
                     .append('g')
@@ -241,52 +284,23 @@ export default {
                     _.stopPropagation();
                     this.onNodeClick(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
-                    const node = d3.select(`#${id}`);
+                    const node = this.svg.select(`#${id}`);
                     this.nodeListener['click']?.(_, d, node, d3);
                 })
                 .on('mouseover', (_, d) => {
                     this.onNodeMouseOver(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
-                    const node = d3.select(`#${id}`);
+                    const node = this.svg.select(`#${id}`);
                     this.nodeListener['mouseover']?.(_, d, node, d3);
                 })
                 .on('mouseout', (_, d) => {
                     this.onNodeMouseOut(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
-                    const node = d3.select(`#${id}`);
+                    const node = this.svg.select(`#${id}`);
                     this.nodeListener['mouseout']?.(_, d, node, d3);
                 });
             //自定义属性，除了id与transform
-            const customNodeAttrs = this.config.node?.attrs || {};
-            // 默认节点属性
-            const nodeDefaultAttrs = {
-                cursor: 'pointer',
-                ...customNodeAttrs,
-                class: (d) => {
-                    let className = 'moon-hierarchy-node';
-                    if (d.data.track.length == 1) className += ' moon-hierarchy-node-root';
-                    if (typeof d.data._isexpend == 'boolean') className += ' moon-hierarchy-node-limit-button';
-                    if (isNonEmptyArray(d.data.children)) className += ' moon-hierarchy-node-expend';
-                    if (isNonEmptyArray(d.data.children) || isNonEmptyArray(d.data._children) || d.data._hasChildren)
-                        className += ' moon-hierarchy-node-haschildren';
-                    let classContent = customNodeAttrs.class;
-                    if (classContent) {
-                        if (typeof classContent == 'function') return `${className} ${classContent(d) || ''}`;
-                        if (typeof classContent == 'string') return `${className} ${classContent}`;
-                    }
-                    return className;
-                },
-                id: (d) => getNodeId(d.data[symbolKey]),
-                transform: (d) => {
-                    // 初始位置
-                    return this.onNodeFoldTranslate(lastClickNode, d);
-                }
-            };
-            // 设置节点属性
-            Object.keys(nodeDefaultAttrs).reduce((_, attr) => {
-                return _.attr(attr, nodeDefaultAttrs[attr]);
-            }, nodes);
-
+            this.setNodeDefaultAttr(nodes);
             this.addListener(nodes, this.nodeListener, this.exceptListener);
             nodes
                 .transition()
@@ -302,7 +316,7 @@ export default {
             for (let i = 0; i < nodeList.length; i++) {
                 let item = nodeList[i];
                 const id = this.getNodeId(item.data[this.symbolKey]);
-                const node = d3.select(`#${id}`);
+                const node = this.svg.select(`#${id}`);
                 this.addListener(node, this.nodeListener, this.exceptListener, item);
                 node.on('click', (_) => {
                     _.stopPropagation();
@@ -325,6 +339,7 @@ export default {
                     });
                 // 移除所有形状
                 node.selectAll('*').remove();
+                this.setNodeClassAttr(node);
                 // 重新添加形状
                 this.iteratorAddNode(node, this.nodeConfig.shaps);
                 this.addShapEexpendFold(node, item);
@@ -357,7 +372,15 @@ export default {
         },
         addListener(node, listener = {}, except = [], qd) {
             Object.keys(listener).forEach((key) => {
-                if (!except.includes(key)) node.on(key, (e, d) => listener[key](e, qd || d, node, d3));
+                if (!except.includes(key)) {
+                    node.on(key, (e, d) => {
+                        if (qd) d = qd;
+                        // node可能时一个序列，重新获取下对象
+                        const id = this.getNodeId(d.data[this.symbolKey]);
+                        const _node = this.svg.select(`#${id}`);
+                        listener[key](e, d, _node, d3);
+                    });
+                }
             });
         },
         addOrUpdateNode() {
@@ -367,7 +390,7 @@ export default {
             for (let i = 0; i < nodeList.length; i++) {
                 let item = nodeList[i];
                 const id = this.getNodeId(item.data[this.symbolKey]);
-                const node = d3.select(`#${id}`);
+                const node = this.svg.select(`#${id}`);
                 if (node.node()) {
                     updateList.push(item);
                 } else {
@@ -397,7 +420,7 @@ export default {
             this.lastClickNode = d;
             const sourceData = this.treeDataFactory.objById[this.lastClickNode.data[symbolKey]];
 
-            const node = d3.select(`#${this.getNodeId(d.data[this.symbolKey])}`);
+            const node = this.svg.select(`#${this.getNodeId(d.data[this.symbolKey])}`);
             if (expend) {
                 // 展开
                 if (isNonEmptyArray(sourceData._children)) {
@@ -440,13 +463,13 @@ export default {
         onNodeMouseOver(d) {
             d.links().forEach((link) => {
                 const id = this.getLinkId(link.source.data[this.symbolKey], link.target.data[this.symbolKey]);
-                d3.select(`#${id}`).classed('moon-hierarchy-node-hover-link', true);
+                this.svg.select(`#${id}`).classed('moon-hierarchy-node-hover-link', true);
             });
         },
         onNodeMouseOut(d) {
             d.links().forEach((link) => {
                 const id = this.getLinkId(link.source.data[this.symbolKey], link.target.data[this.symbolKey]);
-                let line = d3.select(`#${id}`);
+                let line = this.svg.select(`#${id}`);
                 // 获取虚线的总长度
                 line.classed('moon-hierarchy-node-hover-link', false); // 过渡的持续时间，单位毫秒
             });
@@ -454,8 +477,10 @@ export default {
         // 向目标节点添加子节点，childrenList是一个扁平化的树数据
         addNodeToTargetNode(targetNodeId, childrenList) {
             const sourceData = this.treeDataFactory.objById[targetNodeId];
-            const node = d3.select(`#${this.getNodeId(targetNodeId)}`);
-            node.classed('moon-hierarchy-node-expend', true);
+            let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == targetNodeId);
+            this.lastClickNode = node;
+            /*    const node = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
+            node.classed('moon-hierarchy-node-expend', true); */
             try {
                 if (Array.isArray(childrenList) && childrenList.length) {
                     let list = childrenList.map((v) => {
@@ -487,7 +512,9 @@ export default {
                     } else {
                         if (sourceData.children) {
                             sourceData.children.push(...sutTree);
-                        }
+                        } else if (sourceData._children) {
+                            sourceData._children.push(...sutTree);
+                        } else sourceData.children = sutTree;
                     }
                     // 将新数据插入treeDataFactory中
                     flatData
@@ -497,11 +524,12 @@ export default {
                             this.treeDataFactory.objById[id] = v;
                             this.treeDataFactory.flatData.push(v);
                         });
-                    this.drawView();
                 }
             } catch (error) {
                 console.error(error);
             }
+
+            this.onNodeExpendOrFold(node, true);
         },
         async onClickFetchChildren(sourceData) {
             if (sourceData._hasChildren && !sourceData._loading) {
@@ -509,7 +537,7 @@ export default {
                     this.setLoadingIcon(sourceData);
                     let childrenList = await this.nodeListener['clickFetchChildren']?.(
                         sourceData,
-                        d3.select(`#${this.getNodeId(sourceData[this.symbolKey])}`),
+                        this.svg.select(`#${this.getNodeId(sourceData[this.symbolKey])}`),
                         d3
                     );
                     if (Array.isArray(childrenList) && childrenList.length) {
@@ -550,7 +578,7 @@ export default {
             for (let i = 0; i < links.length; i++) {
                 let item = links[i];
                 const id = this.getLinkId(item.source.data[this.symbolKey], item.target.data[this.symbolKey]);
-                const node = d3.select(`#${id}`);
+                const node = this.svg.select(`#${id}`);
                 if (node.node()) {
                     updateList.push(item);
                 } else {
@@ -572,7 +600,8 @@ export default {
                 }
 
                 const nodeId = getNodeId(link.target.data[symbolKey]);
-                d3.select(`#${nodeId}`)
+                this.svg
+                    .select(`#${nodeId}`)
                     .transition()
                     .duration(this.duration)
                     .attr('transform', () => {
@@ -580,7 +609,8 @@ export default {
                     });
 
                 const linkId = getLinkId(link.source.data[symbolKey], link.target.data[symbolKey]);
-                d3.select(`#${linkId}`)
+                this.svg
+                    .select(`#${linkId}`)
                     .transition()
                     .duration(this.duration)
                     .attr('transform', () => {
@@ -622,28 +652,30 @@ export default {
             xw.d = d; //duration
             this.svg.call(this.zoom.transform, xw);
         },
-        appendSvg() {
-            this.$refs.svg.append(this.svg.node());
-        },
         initZoom() {
             let scaleRange = this.config?.zoom?.scaleRange || [0.2, 2];
-            this.zoom = d3
-                .zoom()
-                .scaleExtent(scaleRange)
-                .on('zoom', (e) => {
-                    if (this.config?.zoom?.callback) {
-                        this.config?.zoom?.callback(e);
-                    }
-                    let zoom = e.transform;
-                    this.currentScale = zoom.k;
-                    this.container
-                        .transition()
-                        .duration(zoom.d)
-                        .attr('transform', `translate(${Number(zoom.x)},${zoom.y}) scale(${zoom.k})`);
-                });
-
+            let zoomEvent = (e) => {
+                if (this.config?.zoom?.callback) {
+                    this.config?.zoom?.callback(e);
+                }
+                let zoom = e.transform;
+                this.currentScale = zoom.k;
+                this.container
+                    .transition()
+                    .duration(zoom.d)
+                    .attr('transform', `translate(${Number(zoom.x)},${zoom.y}) scale(${zoom.k})`);
+            };
+            this.zoom = d3.zoom().scaleExtent(scaleRange).on('zoom', zoomEvent);
+            this.zoom.zoomEvent = zoomEvent;
+            this.zoom.scaleRange = scaleRange;
             //禁止双击缩放
             this.svg.call(this.zoom).on('dblclick.zoom', null);
+        },
+        pauseZoom() {
+            this.zoom.scaleExtent([this.currentScale, this.currentScale]);
+        },
+        continueZoom() {
+            this.zoom.scaleExtent(this.zoom.scaleRange);
         },
         // 手动缩放
         scale(scale) {
@@ -668,7 +700,7 @@ export default {
             }, node);
         },
         getNodeById(id) {
-            return { data: this.treeDataFactory.objById[id], el: d3.select(`#${this.getNodeId(id)}`) };
+            return { data: this.treeDataFactory.objById[id], el: this.svg.select(`#${this.getNodeId(id)}`) };
         },
         getAllNode() {
             const idList = Object.keys(this.treeDataFactory.objById);
@@ -676,7 +708,7 @@ export default {
             for (let i = 0; i < idList.length; i++) {
                 const id = idList[i];
                 let data = this.treeDataFactory.objById[id];
-                if (typeof data._isexpend != 'boolean') nodeList.push({ data, el: d3.select(`#${this.getNodeId(id)}`) });
+                if (typeof data._isexpend != 'boolean') nodeList.push({ data, el: this.svg.select(`#${this.getNodeId(id)}`) });
             }
             return nodeList;
         },
@@ -728,6 +760,30 @@ export default {
             // 使用 measureText 方法测量文本宽度
             const textWidth = context.measureText(text).width;
             return textWidth;
+        },
+        createOrUpdateForeignObject(attrs) {
+            attrs = {
+                width: 100,
+                height: 50,
+                transform: 'translate(0,0)',
+                ...attrs
+            };
+            if (!this.foreignObject) {
+                this.foreignObject = this.container.append('foreignObject');
+            }
+            this.showCustomView = true;
+            // 设置节点属性
+            Object.keys(attrs).reduce((_, attr) => {
+                return _.attr(attr, attrs[attr]);
+            }, this.foreignObject);
+            this.foreignObject.node().append(this.$refs.CoustomView);
+        },
+        hiddenCustomView() {
+            this.showCustomView = false;
+            if (this.foreignObject) {
+                this.foreignObject.remove();
+                this.foreignObject = null;
+            }
         }
     }
 };

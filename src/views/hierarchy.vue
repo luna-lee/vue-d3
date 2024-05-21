@@ -5,6 +5,9 @@
                 <button @click="$refs.hierarchy.moveToCenter()">移动到中心</button>
                 <button @click="$refs.hierarchy.zoom(1.5)">放大</button>
                 <button @click="$refs.hierarchy.zoom(0.5)">缩小</button>
+                <button @click="$refs.hierarchy.pauseZoom()">暂停缩放</button>
+                <button @click="$refs.hierarchy.continueZoom()">恢复缩放</button>
+
                 <button @click="addNew()">添加新节点</button>
             </div>
             <div style="margin-top: 10px">
@@ -28,6 +31,7 @@
             <!-- <router-link to="/md-view" target="_blank">文档</router-link> -->
             <a href="https://github.com/luna-lee/moon-hierarchy" target="_blank">github地址</a>
         </div>
+
         <hierarchy
             ref="hierarchy"
             :mode="mode"
@@ -38,18 +42,25 @@
             :config="config"
             :width="width"
             :height="height"
-            @graph="getGraph"
-        ></hierarchy>
+            @draw-done="onDrawDone"
+        >
+            <div style="padding: 10px; background-color: aliceblue">
+                <button @click="onAdd">新增</button>
+                <button @click="onRemove">移除</button>
+            </div>
+        </hierarchy>
     </div>
 </template>
 <script>
 import hierarchy from '@/components/moon-hierarchy/index.vue';
+import ContextmenuView from './ContextmenuView.vue';
 export default {
     inheritAttrs: false,
     name: '',
     props: {},
     components: {
-        hierarchy
+        hierarchy,
+        ContextmenuView
     },
     created() {
         this.setWidthHeight();
@@ -70,9 +81,11 @@ export default {
     },
     data() {
         return {
-            mode: 'h',
+            ContextmenuViewShow: false,
+            mode: 'v',
             layout: 'bf',
             treeData: [],
+            currentNode: {},
             width: 0,
             height: 0,
             config: {
@@ -129,7 +142,13 @@ export default {
                             });
                         },
                         click: (e, d, node, d3) => {
-                            console.log(e, d, node, d3);
+                            // console.log(e, d, node, d3);
+                            this.$refs.hierarchy.hiddenCustomView();
+                        },
+                        contextmenu: (e, d, node, d3) => {
+                            e.preventDefault();
+                            this.currentNode = d.data;
+                            this.$refs.hierarchy.showCustomView(e, d);
                         }
                     },
                     exShaps: [
@@ -157,6 +176,10 @@ export default {
                         }
                     ]
                 },
+                customView: {
+                    width: 120,
+                    height: 100
+                },
                 arrow: {
                     // show: false
                 }
@@ -182,11 +205,28 @@ export default {
                 }
             ]);
         },
-        getGraph(svg) {
+        onDrawDone({ svg, container }) {
             svg.on('click', () => {
                 console.log('这是画布');
+                this.$refs.hierarchy.hiddenCustomView();
             });
-        }
+            this.svg = svg;
+            this.container = container;
+        },
+        onAdd() {
+            console.log(this.currentNode.code);
+            this.$refs.hierarchy.addNode(this.currentNode.code, [
+                {
+                    id: 'new' + new Date().getTime(),
+                    name: '企业信息' + 'new' + new Date().getTime(),
+                    code: 'new' + new Date().getTime(),
+                    modelType: '',
+                    domainId: '',
+                    pcode: this.currentNode.code
+                }
+            ]);
+        },
+        onRemove() {}
     }
 };
 </script>
@@ -201,6 +241,8 @@ export default {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
+        border: 1px solid;
+        background-color: pink;
         div {
             padding: 5px;
         }

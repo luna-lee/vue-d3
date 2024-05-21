@@ -1,5 +1,7 @@
 <template>
-    <div ref="svg"></div>
+    <div ref="svg">
+        <div ref="CoustomView" v-show="showCustomView" class="moon-hierarchy-custom-view"><slot /></div>
+    </div>
 </template>
 <script>
 import { getUUID } from '@/utils.js';
@@ -326,7 +328,7 @@ export default {
             for (let i = 0; i < links.length; i++) {
                 let item = links[i];
                 const id = this.getLinkId(item.source.data[this.symbolKey], item.target.data[this.symbolKey]);
-                const path = d3.select(`#${id}`);
+                const path = this.svg.select(`#${id}`);
                 path.transition()
                     .duration(this.duration)
                     .attr('transform', ` translate(${this.getTranslateOffset(item.target)},0)  scale(1)`)
@@ -457,9 +459,70 @@ export default {
                         (d) => `${x(d) + this.defsNodeConfig.loadingSize / 2} ${y(d) + this.defsNodeConfig.loadingSize / 2}`
                     );
             } else {
-                let use = d3.select(`#${nodeId}`).select('use');
+                let use = this.svg.select(`#${nodeId}`).select('use');
                 use.remove();
             }
+        },
+        drawCustomView(e, d, width, height, priority) {
+            // 不指width, height时使用全局配置
+            width = width || this.config?.customView?.width || 100;
+            height = height || this.config?.customView?.height || 50;
+            // priority 优先出现位置
+            priority = priority || ['rb', 'rt', 'lb', 'lt'];
+            const svgRect = this.svg.node().getBoundingClientRect();
+            const nodeId = this.getNodeId(d.data[this.symbolKey]);
+            // 获取矩形元素的边界框
+            const elementRect = this.svg.select(`#${nodeId}`).node().getBoundingClientRect();
+
+            // 判断是否有足够的视图区域显示。
+            let mapObjJudge = {
+                rb: svgRect.bottom - elementRect.bottom >= height && svgRect.right - elementRect.right >= width,
+                rt: elementRect.top - svgRect.top >= height && svgRect.right - elementRect.right >= width,
+                lb: svgRect.bottom - elementRect.bottom >= height && elementRect.left - svgRect.left >= width,
+                lt: elementRect.top - svgRect.top >= height && elementRect.left - svgRect.left >= width
+            };
+            let mapPath = priority.find((p) => mapObjJudge[p]) || 'rb';
+            let transform = '';
+            let { nodeHeight, nodeWidth } = d.data._nodeConfig;
+
+            let offset = this.getTranslateOffset(d);
+            // 节点的四个点的坐标
+            let xy = {
+                positive: {
+                    // 右上
+                    rt: [d.y + nodeWidth, d.x - height],
+                    // 左上
+                    lt: [d.y - width, d.x - height],
+                    // 右下
+                    rb: [d.y + nodeWidth, d.x + nodeHeight],
+                    // 左下
+                    lb: [d.y - width, d.x + nodeHeight]
+                },
+                negative: {
+                    // 右上
+                    rt: [-d.y + offset, d.x - height],
+                    // 右下
+                    rb: [-d.y + offset, d.x + nodeHeight],
+                    // 左上
+                    lt: [-d.y + offset - nodeWidth - width, d.x - height],
+                    // 左下
+                    lb: [-d.y + offset - nodeWidth - width, d.x + nodeHeight]
+                }
+            };
+
+            if (d.data._sign == 1) {
+                // 右下角
+                transform = `translate(${xy.positive[mapPath][0]},${xy.positive[mapPath][1]}) scale(1)`;
+            }
+            if (d.data._sign == -1) {
+                transform = `translate(${xy.negative[mapPath][0]},${xy.negative[mapPath][1]}) scale(1)`;
+            }
+
+            this.createOrUpdateForeignObject({
+                width,
+                height,
+                transform
+            });
         }
     }
 };

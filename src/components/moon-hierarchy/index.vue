@@ -1,13 +1,12 @@
 <template>
     <div>
-        <horizontal v-if="mode == 'h'" ref="MoonHierarchy" v-bind="$attrs" v-on="$listeners"></horizontal>
-        <vertical v-else ref="MoonHierarchy" v-bind="$attrs" v-on="$listeners"></vertical>
+        <horizontal v-if="mode == 'h'" ref="MoonHierarchy" v-bind="$attrs" v-on="$listeners"> <slot /></horizontal>
+        <vertical v-else ref="MoonHierarchy" v-bind="$attrs" v-on="$listeners"> <slot /></vertical>
     </div>
 </template>
 <script>
 import horizontal from './h.vue';
 import vertical from './v.vue';
-
 export default {
     inheritAttrs: false,
     name: 'MoonHierarchy',
@@ -21,7 +20,9 @@ export default {
     created() {},
     mounted() {},
     data() {
-        return {};
+        return {
+            show: false
+        };
     },
     watch: {},
     computed: {},
@@ -40,6 +41,21 @@ export default {
         },
         addNode(targetNodeId, childrenNode) {
             this.$refs.MoonHierarchy.addNodeToTargetNode(targetNodeId, childrenNode);
+        },
+        pauseZoom() {
+            this.$refs.MoonHierarchy.pauseZoom();
+        },
+        continueZoom() {
+            this.$refs.MoonHierarchy.continueZoom();
+        },
+        getTranslateOffset(d) {
+            return this.$refs.MoonHierarchy.getTranslateOffset(d);
+        },
+        showCustomView(e, d, width, height, priority) {
+            this.$refs.MoonHierarchy.drawCustomView(e, d, width, height, priority);
+        },
+        hiddenCustomView() {
+            this.$refs.MoonHierarchy.hiddenCustomView();
         }
     }
 };
@@ -63,6 +79,7 @@ export default {
             fill: rgb(234, 242, 255);
             stroke-width: 1;
         }
+
         // 根节点样式
         &.moon-hierarchy-node-root {
             .moon-hierarchy-rect {
@@ -107,6 +124,16 @@ export default {
                 stroke: rgb(18, 137, 239);
             }
         }
+    }
+    .moon-hierarchy-custom-view {
+        border: 2px solid;
+        width: 100%;
+        height: 100%;
+        background-color: #fff;
+        border-radius: 8px;
+        box-sizing: border-box;
+        box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+        cursor: pointer;
     }
     .moon-hierarchy-arrow {
         fill: #128bed;

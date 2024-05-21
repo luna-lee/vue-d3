@@ -255,9 +255,9 @@ exShaps = [
 
 ### Events
 
-| 名称  | 说明                                                 | 参数       |
-| ----- | ---------------------------------------------------- | ---------- |
-| graph | 获取当前画布 D3 对象，可以挂载监听，修改属性等操作。 | D3Selector |
+| 名称      | 说明               | 参数            |
+| --------- | ------------------ | --------------- |
+| draw-done | 画布渲染完成后事件 | {svg,container} |
 
 ### Methods
 
@@ -431,7 +431,7 @@ exShaps = [
             :config="config"
             :width="width"
             :height="height"
-            @graph="getGraph"
+            @draw-done="onDrawDone"
         ></hierarchy>
     </div>
 </template>
@@ -575,7 +575,7 @@ export default {
                 }
             ]);
         },
-        getGraph(svg) {
+        onDrawDone({svg}) {
             svg.on('click', () => {
                 console.log('这是画布');
             });
