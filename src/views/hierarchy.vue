@@ -42,9 +42,10 @@
             :height="height"
             @draw-done="onDrawDone"
         >
-            <div style="padding: 10px; background-color: aliceblue">
+            <div class="contextmenu">
                 <button @click="onAdd">新增</button>
                 <button @click="onRemove">移除</button>
+                <button @click="onUpdate">更新数据</button>
             </div>
         </hierarchy>
     </div>
@@ -228,7 +229,10 @@ export default {
             );
         },
         onRemove() {
-            this.$refs.hierarchy.removeNodeByIds(this.currentNode.code);
+            this.$refs.hierarchy.removeNodeById(this.currentNode.code);
+        },
+        onUpdate() {
+            this.$refs.hierarchy.updateNodeByData({ ...this.currentNode, name: 'hello', children: [] });
         }
     }
 };
@@ -256,5 +260,15 @@ export default {
     right: 10px;
     display: flex;
     gap: 20px;
+}
+.contextmenu {
+    background-color: antiquewhite;
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    padding: 5px;
+    border-radius: 8px;
+    box-sizing: border-box;
+    box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
 }
 </style>

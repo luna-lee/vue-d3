@@ -312,6 +312,23 @@ export default {
             this.iteratorAddNode(nodes, this.nodeConfig.shaps);
             this.addShapEexpendFold(nodes);
         },
+        updateNodeByData(dataList) {
+            if (!Array.isArray(dataList)) {
+                dataList = [dataList];
+            }
+            // 不更新的属性项
+            let exAttrs = [this.inner_treeOptions.id, this.inner_treeOptions.pId, 'children', 'level', 'track', 'trigger'];
+
+            dataList.forEach((data) => {
+                let old = this.treeDataFactory.objById[data[this.symbolKey]];
+                let backup = Object.keys(old).reduce((obj, key) => {
+                    if (exAttrs.includes(key) || key.startsWith('_')) obj[key] = old[key];
+                    return obj;
+                }, {});
+                Object.assign(old, data, backup);
+            });
+            this.drawView();
+        },
         updateNode(nodeList) {
             for (let i = 0; i < nodeList.length; i++) {
                 let item = nodeList[i];
@@ -357,11 +374,12 @@ export default {
                 const subNode = this.svg.select(`#${this.getNodeId(subId)}`);
                 subNode.remove();
             });
-            // 移除相关link
+            // 移除当前节点及其子节点的相关link
             const links = this.treeLayoutData.links();
             for (let i = 0; i < links.length; i++) {
                 let item = links[i];
-                if (item.source.data[this.symbolKey] == id || item.target.data[this.symbolKey] == id) {
+                let idList = [...sourceData.trigger, id];
+                if (idList.includes(item.source.data[this.symbolKey]) || idList.includes(item.target.data[this.symbolKey])) {
                     const id = this.getLinkId(item.source.data[this.symbolKey], item.target.data[this.symbolKey]);
                     const linkNode = this.svg.select(`#${id}`);
                     linkNode.remove();
@@ -427,7 +445,7 @@ export default {
             });
             if (redraw) this.drawView();
         },
-        removeNodeByIds(ids) {
+        removeNodeById(ids) {
             if (!Array.isArray(ids)) {
                 ids = [ids];
             }
@@ -568,7 +586,6 @@ export default {
         // 向目标节点添加子节点，childrenList是一个扁平化的树数据
         addNodeToTargetNode(targetNodeId, childrenList, _sign) {
             const sourceData = this.treeDataFactory.objById[targetNodeId];
-            sourceData.trigger.push(childrenList.map((v) => v[this.symbolKey]));
             // 若目标节点时根节点，
             // 蝴蝶布局，可以传入第3个参数，控制新增的节点的方向。否则与当前节点方向一致
             // 下-上，右-左布局，_sign设置为-1，其他情况设置为1
@@ -585,30 +602,36 @@ export default {
             this.lastClickNode = node;
             try {
                 if (Array.isArray(childrenList) && childrenList.length) {
+                    // 所有的父节点trigger中都需要添加新增的字节id
+                    sourceData.track.map((id) => {
+                        this.treeDataFactory.objById[id].trigger.push(...childrenList.map((v) => v[this.symbolKey]));
+                    });
+
                     let list = childrenList.map((v) => {
                         v._sign = _sign;
-                        // 没有设置pid的自动设置当前的pid
-                        if (!v[this.inner_treeOptions.pId]) v[this.inner_treeOptions.pId] = sourceData[this.symbolKey];
+                        v[this.inner_treeOptions.pId] = sourceData[this.symbolKey];
                         return v;
                     });
-                    // 判断是否有当前数据的列表
+                    // 判断列表是否有当前数据
                     let rootIndex = list.findIndex((v) => v[this.symbolKey] == sourceData[this.symbolKey]);
                     //有则移除
                     if (rootIndex != -1) list.splice(rootIndex, 1);
+                    // 重新拷贝一份当前数据，清空里面的children，用做后面重新构建一个树结构数据。
                     const copySourceData = { ...sourceData };
                     copySourceData.children = [];
                     list.push(copySourceData);
+                    // 重新构建一个树结构数据。
                     let { objById, flatData } = flatToTree(list, this.symbolKey, this.inner_treeOptions.pId);
+
                     let sutTree = objById[sourceData[this.symbolKey]].children;
                     if (sourceData._exChildren?.length) {
+                        let children = sourceData.children || sourceData._children;
                         // 展开节点
-                        let lastExpendNodeIndex = sourceData.children.findIndex(
-                            (v) => typeof v._isexpend == 'boolean' && v._sign == _sign
-                        );
-                        let lastExpendNode = sourceData.children[lastExpendNodeIndex];
+                        let lastExpendNodeIndex = children.findIndex((v) => typeof v._isexpend == 'boolean' && v._sign == _sign);
+                        let lastExpendNode = children[lastExpendNodeIndex];
                         sourceData._exChildren.push(...sutTree);
                         // 若处于展开状态，也要添加在children中,插入到展开按钮前
-                        if (lastExpendNode._isexpend) {
+                        if (lastExpendNode?._isexpend) {
                             sourceData.children.splice(lastExpendNodeIndex, 0, ...sutTree);
                         }
                     } else {
@@ -643,6 +666,11 @@ export default {
                         d3
                     );
                     if (Array.isArray(childrenList) && childrenList.length) {
+                        // 所有的父节点trigger中都需要添加新增的字节id
+                        sourceData.track.map((id) => {
+                            this.treeDataFactory.objById[id].trigger.push(...childrenList.map((v) => v[this.symbolKey]));
+                        });
+
                         let list = childrenList.map((v) => {
                             v._sign = sourceData._sign;
                             // 没有设置pid的自动设置当前的pid
@@ -724,6 +752,7 @@ export default {
             this.initLayoutData();
             this.addOrUpdateLinks();
             this.addOrUpdateNode();
+            this.updateCustomView();
         },
         addDefs() {
             const defs = this.svg.append('defs');
@@ -867,7 +896,8 @@ export default {
             attrs = {
                 width: 100,
                 height: 50,
-                transform: 'translate(0,0)',
+                transform_begin: 'translate(0,0) scale(0)',
+                transform: 'translate(0,0) scale(1)',
                 ...attrs
             };
             if (!this.foreignObject) {
@@ -876,12 +906,33 @@ export default {
             this.showCustomView = true;
             // 设置节点属性
             Object.keys(attrs).reduce((_, attr) => {
-                return _.attr(attr, attrs[attr]);
+                if (attr != 'transform') return _.attr(attr, attrs[attr]);
+                else return _;
             }, this.foreignObject);
+            if (attrs.hasChangeNode) this.foreignObject.attr('transform', attrs.transform_begin);
+            this.foreignObject.transition().duration(this.duration).attr('transform', attrs.transform);
+            this.foreignObject.on('click', (e) => e.stopPropagation());
             this.foreignObject.node().append(this.$refs.CoustomView);
+        },
+        updateCustomView() {
+            // 若当前自定义视图开启，且依据节点绘制，则在画图重绘制时也重绘
+            if (this.foreignObject && this.drawCustomViewLastConfig.d) {
+                let item = this.drawCustomViewLastConfig.d;
+                // 判断目标节点是否被移除
+                const nodeD3 = this.svg.select(`#${this.getNodeId(item.data[this.symbolKey])}`);
+                if (nodeD3.node()) {
+                    let id = this.drawCustomViewLastConfig.d.data[this.symbolKey];
+                    let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
+                    let { e, width, height, priority } = this.drawCustomViewLastConfig;
+                    this.drawCustomView(e, node, width, height, priority);
+                } else {
+                    this.hiddenCustomView();
+                }
+            }
         },
         hiddenCustomView() {
             this.showCustomView = false;
+            this.drawCustomViewLastConfig = {};
             if (this.foreignObject) {
                 this.foreignObject.remove();
                 this.foreignObject = null;

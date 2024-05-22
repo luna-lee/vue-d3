@@ -42,8 +42,9 @@ export default {
         addNode(targetNodeId, childrenNode, _sign) {
             this.$refs.MoonHierarchy.addNodeToTargetNode(targetNodeId, childrenNode, _sign);
         },
-        removeNodeByIds(ids) {
-            this.$refs.MoonHierarchy.removeNodeByIds(ids);
+        // id可以是数组
+        removeNodeById(id) {
+            this.$refs.MoonHierarchy.removeNodeById(id);
         },
         pauseZoom() {
             this.$refs.MoonHierarchy.pauseZoom();
@@ -59,6 +60,10 @@ export default {
         },
         hiddenCustomView() {
             this.$refs.MoonHierarchy.hiddenCustomView();
+        },
+        // data可以是数组
+        updateNodeByData(data) {
+            this.$refs.MoonHierarchy.updateNodeByData(data);
         }
     }
 };
@@ -129,14 +134,13 @@ export default {
         }
     }
     .moon-hierarchy-custom-view {
-        border: 2px solid;
         width: 100%;
         height: 100%;
         background-color: #fff;
         padding: 5px;
         border-radius: 8px;
         box-sizing: border-box;
-        box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
+        // box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
         cursor: pointer;
     }
     .moon-hierarchy-arrow {

@@ -485,10 +485,35 @@ export default {
             };
             let mapPath = priority.find((p) => mapObjJudge[p]) || 'rb';
             let transform = '';
+            let transform_begin = '';
             let { nodeHeight, nodeWidth } = d.data._nodeConfig;
 
             let offset = this.getTranslateOffset(d);
-            // 节点的四个点的坐标
+            // 目标节点的四个点的坐标
+            let xy_node = {
+                positive: {
+                    // 右上
+                    rt: [d.y + nodeWidth, d.x],
+                    // 左上
+                    lt: [d.y, d.x],
+                    // 右下
+                    rb: [d.y + nodeWidth, d.x + nodeHeight],
+                    // 左下
+                    lb: [d.y, d.x + nodeHeight]
+                },
+                negative: {
+                    // 右上
+                    rt: [-d.y + offset, d.x],
+                    // 右下
+                    rb: [-d.y + offset, d.x + nodeHeight],
+                    // 左上
+                    lt: [-d.y + offset - nodeWidth, d.x],
+                    // 左下
+                    lb: [-d.y + offset - nodeWidth, d.x + nodeHeight]
+                }
+            };
+
+            // customview 节点的四个点的坐标
             let xy = {
                 positive: {
                     // 右上
@@ -514,16 +539,28 @@ export default {
 
             if (d.data._sign == 1) {
                 // 右下角
+                transform_begin = `translate(${xy_node.positive[mapPath][0]},${xy_node.positive[mapPath][1]}) scale(0)`;
                 transform = `translate(${xy.positive[mapPath][0]},${xy.positive[mapPath][1]}) scale(1)`;
             }
             if (d.data._sign == -1) {
+                transform_begin = `translate(${xy_node.negative[mapPath][0]},${xy_node.negative[mapPath][1]}) scale(0)`;
                 transform = `translate(${xy.negative[mapPath][0]},${xy.negative[mapPath][1]}) scale(1)`;
             }
-
+            // 判断当前目标节点是否与上次一致，一致的话则不触发动画
+            let hasChangeNode = d.data[this.symbolKey] != this.drawCustomViewLastConfig?.d?.data?.[this.symbolKey];
+            this.drawCustomViewLastConfig = {
+                e,
+                d,
+                width,
+                height,
+                priority
+            };
             this.createOrUpdateForeignObject({
                 width,
                 height,
-                transform
+                transform,
+                transform_begin,
+                hasChangeNode
             });
         }
     }
