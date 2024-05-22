@@ -346,6 +346,10 @@ export default {
             }
         },
         removeNode(id, redraw = true) {
+            let root = this.treeDataFactory.treeData[0];
+            if (id == root[this.symbolKey]) {
+                throw '根节点不能删除';
+            }
             const sourceData = this.treeDataFactory.objById[id];
             const node = this.svg.select(`#${this.getNodeId(id)}`);
             // 移除子项
@@ -364,58 +368,63 @@ export default {
                 }
             }
             node.remove();
-            // 从js数据中移除
-            this.treeDataFactory.flatData.splice(
-                this.treeDataFactory.flatData.findIndex((v) => v[this.symbolKey] == id),
-                1
-            );
-            let parentNode = this.treeDataFactory.objById[sourceData[this.inner_treeOptions.pId]];
-            // 从父节点中_exChildren中移除
-            if (parentNode._exChildren) {
-                let index = parentNode._exChildren.findIndex((v) => v[this.symbolKey] == id);
-                if (index >= 0) parentNode._exChildren.splice(index, 1);
-            }
-            // 从父节点中children,_children中移除
-            const pChildren = (childrenName) => {
-                let arr = parentNode[childrenName];
-                if (arr) {
-                    // 移除当前节点
-                    arr.splice(
-                        arr.findIndex((v) => v[this.symbolKey] == id),
-                        1
-                    );
-                    // 判断是否需要移除展开按钮节点,
-                    if (this.limit > 0 && parentNode._exChildren) {
-                        // 判断当前展示项是否小于限定数，若小于，则需要从折叠项中提取差量项插入
-                        let _sameList = parentNode._exChildren.filter((v) => v._sign == sourceData._sign);
-                        let sameList = arr.filter((v) => v._sign == sourceData._sign && typeof v._isexpend != 'boolean');
-                        if (sameList.length < this.limit) {
-                            let insert = _sameList.slice(0, this.limit - sameList.length);
-                            let expendNodeIndex = arr.findIndex(
-                                (v) => typeof v._isexpend == 'boolean' && v._sign == sourceData._sign
-                            );
-                            arr.splice(expendNodeIndex, 0, ...insert);
-                            arrayRemoveItem(parentNode._exChildren, (item) => {
-                                return insert.find((v) => v[this.symbolKey] == item[this.symbolKey]);
-                            });
-                        }
 
+            // 处理父节点
+            let parentNode = this.treeDataFactory.objById[sourceData[this.inner_treeOptions.pId]];
+            if (parentNode) {
+                // 从父节点中_exChildren中移除
+                if (parentNode._exChildren) {
+                    let index = parentNode._exChildren.findIndex((v) => v[this.symbolKey] == id);
+                    if (index >= 0) parentNode._exChildren.splice(index, 1);
+                }
+                // 从父节点中children,_children中移除
+                const pChildren = (childrenName) => {
+                    let arr = parentNode[childrenName];
+                    if (arr) {
+                        // 移除当前节点
+                        arr.splice(
+                            arr.findIndex((v) => v[this.symbolKey] == id),
+                            1
+                        );
                         // 判断是否需要移除展开按钮节点,
-                        // 找到同向的节点，
-                        _sameList = parentNode._exChildren.filter((v) => v._sign == sourceData._sign);
-                        sameList = arr.filter((v) => v._sign == sourceData._sign && typeof v._isexpend != 'boolean');
-                        if (sameList.length + _sameList.length <= this.limit) {
-                            //  移除展开节点
-                            let expendNode = arr.find((v) => typeof v._isexpend == 'boolean' && v._sign == sourceData._sign);
-                            if (expendNode) this.removeNode(expendNode[this.symbolKey], false);
+                        if (this.limit > 0 && parentNode._exChildren) {
+                            // 判断当前展示项是否小于限定数，若小于，则需要从折叠项中提取差量项插入
+                            let _sameList = parentNode._exChildren.filter((v) => v._sign == sourceData._sign);
+                            let sameList = arr.filter((v) => v._sign == sourceData._sign && typeof v._isexpend != 'boolean');
+                            if (sameList.length < this.limit) {
+                                let insert = _sameList.slice(0, this.limit - sameList.length);
+                                let expendNodeIndex = arr.findIndex(
+                                    (v) => typeof v._isexpend == 'boolean' && v._sign == sourceData._sign
+                                );
+                                arr.splice(expendNodeIndex, 0, ...insert);
+                                arrayRemoveItem(parentNode._exChildren, (item) => {
+                                    return insert.find((v) => v[this.symbolKey] == item[this.symbolKey]);
+                                });
+                            }
+
+                            // 判断是否需要移除展开按钮节点,
+                            // 找到同向的节点，
+                            _sameList = parentNode._exChildren.filter((v) => v._sign == sourceData._sign);
+                            sameList = arr.filter((v) => v._sign == sourceData._sign && typeof v._isexpend != 'boolean');
+                            if (sameList.length + _sameList.length <= this.limit) {
+                                //  移除展开节点
+                                let expendNode = arr.find((v) => typeof v._isexpend == 'boolean' && v._sign == sourceData._sign);
+                                if (expendNode) this.removeNode(expendNode[this.symbolKey], false);
+                            }
                         }
                     }
-                }
-            };
-            pChildren('children');
-            pChildren('_children');
+                };
+                pChildren('children');
+                pChildren('_children');
+            }
 
-            delete this.treeDataFactory.objById[id];
+            // 节点 以及所有子节点
+            arrayRemoveItem(this.treeDataFactory.flatData, (item) => {
+                return [...sourceData.trigger, id].includes(item[this.symbolKey]);
+            });
+            [...sourceData.trigger, id].forEach((id) => {
+                delete this.treeDataFactory.objById[id];
+            });
             if (redraw) this.drawView();
         },
         removeNodeByIds(ids) {
@@ -559,7 +568,7 @@ export default {
         // 向目标节点添加子节点，childrenList是一个扁平化的树数据
         addNodeToTargetNode(targetNodeId, childrenList, _sign) {
             const sourceData = this.treeDataFactory.objById[targetNodeId];
-
+            sourceData.trigger.push(childrenList.map((v) => v[this.symbolKey]));
             // 若目标节点时根节点，
             // 蝴蝶布局，可以传入第3个参数，控制新增的节点的方向。否则与当前节点方向一致
             // 下-上，右-左布局，_sign设置为-1，其他情况设置为1
