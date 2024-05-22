@@ -375,7 +375,7 @@ export default {
             width = width || this.config?.customView?.width || 100;
             height = height || this.config?.customView?.height || 50;
             // priority 优先出现位置
-            priority = priority || ['rb', 'rt', 'lb', 'lt'];
+            priority = priority || this.config?.customView?.priority || ['rb', 'rt', 'lb', 'lt'];
             const svgRect = this.svg.node().getBoundingClientRect();
             const nodeId = this.getNodeId(d.data[this.symbolKey]);
             // 获取矩形元素的边界框
