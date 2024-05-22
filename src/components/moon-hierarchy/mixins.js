@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { flatToTree } from '@/utils.js';
+import { flatToTree, arrayRemoveItem } from '@/utils.js';
 function isNonEmptyArray(arr) {
     return arr && arr.length;
 }
@@ -345,6 +345,88 @@ export default {
                 this.addShapEexpendFold(node, item);
             }
         },
+        removeNode(id, redraw = true) {
+            const sourceData = this.treeDataFactory.objById[id];
+            const node = this.svg.select(`#${this.getNodeId(id)}`);
+            // 移除子项
+            sourceData.trigger.forEach((subId) => {
+                const subNode = this.svg.select(`#${this.getNodeId(subId)}`);
+                subNode.remove();
+            });
+            // 移除相关link
+            const links = this.treeLayoutData.links();
+            for (let i = 0; i < links.length; i++) {
+                let item = links[i];
+                if (item.source.data[this.symbolKey] == id || item.target.data[this.symbolKey] == id) {
+                    const id = this.getLinkId(item.source.data[this.symbolKey], item.target.data[this.symbolKey]);
+                    const linkNode = this.svg.select(`#${id}`);
+                    linkNode.remove();
+                }
+            }
+            node.remove();
+            // 从js数据中移除
+            this.treeDataFactory.flatData.splice(
+                this.treeDataFactory.flatData.findIndex((v) => v[this.symbolKey] == id),
+                1
+            );
+            let parentNode = this.treeDataFactory.objById[sourceData[this.inner_treeOptions.pId]];
+            // 从父节点中_exChildren中移除
+            if (parentNode._exChildren) {
+                let index = parentNode._exChildren.findIndex((v) => v[this.symbolKey] == id);
+                if (index >= 0) parentNode._exChildren.splice(index, 1);
+            }
+            // 从父节点中children,_children中移除
+            const pChildren = (childrenName) => {
+                let arr = parentNode[childrenName];
+                if (arr) {
+                    // 移除当前节点
+                    arr.splice(
+                        arr.findIndex((v) => v[this.symbolKey] == id),
+                        1
+                    );
+                    // 判断是否需要移除展开按钮节点,
+                    if (this.limit > 0 && parentNode._exChildren) {
+                        // 判断当前展示项是否小于限定数，若小于，则需要从折叠项中提取差量项插入
+                        let _sameList = parentNode._exChildren.filter((v) => v._sign == sourceData._sign);
+                        let sameList = arr.filter((v) => v._sign == sourceData._sign && typeof v._isexpend != 'boolean');
+                        if (sameList.length < this.limit) {
+                            let insert = _sameList.slice(0, this.limit - sameList.length);
+                            let expendNodeIndex = arr.findIndex(
+                                (v) => typeof v._isexpend == 'boolean' && v._sign == sourceData._sign
+                            );
+                            arr.splice(expendNodeIndex, 0, ...insert);
+                            arrayRemoveItem(parentNode._exChildren, (item) => {
+                                return insert.find((v) => v[this.symbolKey] == item[this.symbolKey]);
+                            });
+                        }
+
+                        // 判断是否需要移除展开按钮节点,
+                        // 找到同向的节点，
+                        _sameList = parentNode._exChildren.filter((v) => v._sign == sourceData._sign);
+                        sameList = arr.filter((v) => v._sign == sourceData._sign && typeof v._isexpend != 'boolean');
+                        if (sameList.length + _sameList.length <= this.limit) {
+                            //  移除展开节点
+                            let expendNode = arr.find((v) => typeof v._isexpend == 'boolean' && v._sign == sourceData._sign);
+                            if (expendNode) this.removeNode(expendNode[this.symbolKey], false);
+                        }
+                    }
+                }
+            };
+            pChildren('children');
+            pChildren('_children');
+
+            delete this.treeDataFactory.objById[id];
+            if (redraw) this.drawView();
+        },
+        removeNodeByIds(ids) {
+            if (!Array.isArray(ids)) {
+                ids = [ids];
+            }
+            ids.forEach((id) => {
+                this.removeNode(id, false);
+            });
+            this.drawView();
+        },
         addShapEexpendFold(node, qt) {
             if (this.expendShape != this.foldShape) {
                 if (this.expendShape) {
@@ -475,8 +557,17 @@ export default {
             });
         },
         // 向目标节点添加子节点，childrenList是一个扁平化的树数据
-        addNodeToTargetNode(targetNodeId, childrenList) {
+        addNodeToTargetNode(targetNodeId, childrenList, _sign) {
+            console.log(_sign);
+
             const sourceData = this.treeDataFactory.objById[targetNodeId];
+            // 若目标节点时根节点，可以传入第3个参数，控制新增的节点的方向。否则与当前节点方向一致
+            let root = this.treeDataFactory.treeData[0];
+
+            if (targetNodeId == root[this.symbolKey]) {
+                _sign = _sign || sourceData._sign;
+            } else _sign = sourceData._sign;
+            console.log(_sign);
             let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == targetNodeId);
             this.lastClickNode = node;
             /*    const node = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
@@ -484,7 +575,7 @@ export default {
             try {
                 if (Array.isArray(childrenList) && childrenList.length) {
                     let list = childrenList.map((v) => {
-                        v._sign = sourceData._sign;
+                        v._sign = _sign;
                         // 没有设置pid的自动设置当前的pid
                         if (!v[this.inner_treeOptions.pId]) v[this.inner_treeOptions.pId] = sourceData[this.symbolKey];
                         return v;
@@ -501,7 +592,7 @@ export default {
                     if (sourceData._exChildren?.length) {
                         // 展开节点
                         let lastExpendNodeIndex = sourceData.children.findIndex(
-                            (v) => typeof v._isexpend == 'boolean' && v._sign == sourceData._sign
+                            (v) => typeof v._isexpend == 'boolean' && v._sign == _sign
                         );
                         let lastExpendNode = sourceData.children[lastExpendNodeIndex];
                         sourceData._exChildren.push(...sutTree);

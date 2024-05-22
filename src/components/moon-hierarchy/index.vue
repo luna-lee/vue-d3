@@ -39,8 +39,11 @@ export default {
         zoom(scale) {
             this.$refs.MoonHierarchy.scale(scale);
         },
-        addNode(targetNodeId, childrenNode) {
-            this.$refs.MoonHierarchy.addNodeToTargetNode(targetNodeId, childrenNode);
+        addNode(targetNodeId, childrenNode, _sign) {
+            this.$refs.MoonHierarchy.addNodeToTargetNode(targetNodeId, childrenNode, _sign);
+        },
+        removeNodeByIds(ids) {
+            this.$refs.MoonHierarchy.removeNodeByIds(ids);
         },
         pauseZoom() {
             this.$refs.MoonHierarchy.pauseZoom();
@@ -130,6 +133,7 @@ export default {
         width: 100%;
         height: 100%;
         background-color: #fff;
+        padding: 5px;
         border-radius: 8px;
         box-sizing: border-box;
         box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);

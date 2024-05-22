@@ -7,8 +7,6 @@
                 <button @click="$refs.hierarchy.zoom(0.5)">缩小</button>
                 <button @click="$refs.hierarchy.pauseZoom()">暂停缩放</button>
                 <button @click="$refs.hierarchy.continueZoom()">恢复缩放</button>
-
-                <button @click="addNew()">添加新节点</button>
             </div>
             <div style="margin-top: 10px">
                 <input type="radio" id="h" value="h" v-model="mode" />
@@ -214,19 +212,24 @@ export default {
             this.container = container;
         },
         onAdd() {
-            console.log(this.currentNode.code);
-            this.$refs.hierarchy.addNode(this.currentNode.code, [
-                {
-                    id: 'new' + new Date().getTime(),
-                    name: '企业信息' + 'new' + new Date().getTime(),
-                    code: 'new' + new Date().getTime(),
-                    modelType: '',
-                    domainId: '',
-                    pcode: this.currentNode.code
-                }
-            ]);
+            this.$refs.hierarchy.addNode(
+                this.currentNode.code,
+                [
+                    {
+                        id: 'new' + new Date().getTime(),
+                        name: '企业信息' + 'new' + new Date().getTime(),
+                        code: 'new' + new Date().getTime(),
+                        modelType: '',
+                        domainId: '',
+                        pcode: this.currentNode.code
+                    }
+                ],
+                -1
+            );
         },
-        onRemove() {}
+        onRemove() {
+            this.$refs.hierarchy.removeNodeByIds(this.currentNode.code);
+        }
     }
 };
 </script>

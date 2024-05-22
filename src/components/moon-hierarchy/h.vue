@@ -213,10 +213,12 @@ export default {
                                 [this.inner_treeOptions.name]: '展开',
                                 [this.inner_treeOptions.pId]: item[this.symbolKey],
                                 track: [...item.track, id],
+                                trigger: [],
                                 level: item.level + 1,
                                 _isexpend: false,
                                 _sign
                             };
+                            item.trigger.push(id);
                             this.treeDataFactory.flatData.push(expendNode);
                             this.treeDataFactory.objById[id] = expendNode;
 
