@@ -61,6 +61,9 @@ export default {
         // data可以是数组
         updateNodeByData(data) {
             this.$refs.MoonHierarchy.updateNodeByData(data);
+        },
+        expendToNode(targetNodeId) {
+            this.$refs.MoonHierarchy.expendToNode(targetNodeId);
         }
     }
 };

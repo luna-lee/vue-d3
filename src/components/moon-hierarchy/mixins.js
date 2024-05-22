@@ -643,6 +643,15 @@ export default {
                         if (lastExpendNode?._isexpend) {
                             sourceData.children.splice(lastExpendNodeIndex, 0, ...sutTree);
                         }
+                        // 展开限制隐藏的项
+                        if (!lastExpendNode._isexpend) {
+                            lastExpendNode._isexpend = true;
+                            children.splice(
+                                children.indexOf(lastExpendNode),
+                                0,
+                                ...node.data._exChildren.filter((v) => v._sign == lastExpendNode._sign)
+                            );
+                        }
                     } else {
                         if (sourceData.children) {
                             sourceData.children.push(...sutTree);
@@ -946,6 +955,48 @@ export default {
                 this.foreignObject.remove();
                 this.foreignObject = null;
             }
+        },
+        expendToNode(targetNodeId) {
+            const sourceData = this.treeDataFactory.objById[targetNodeId];
+            sourceData.track.forEach((id, index) => {
+                if (id != targetNodeId) {
+                    let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
+                    // 设置动画起始节点
+                    if (isNonEmptyArray(node.data._children)) {
+                        if (!this.lastClickNode) this.lastClickNode = node;
+                    }
+                    let el = this.svg.select(`#${this.getNodeId(id)}`);
+                    // 展开节点
+                    if (isNonEmptyArray(node.data._children)) {
+                        el.classed('moon-hierarchy-node-expend', true);
+                        node.data.children = node.data._children;
+                        node.data._children = undefined;
+                    }
+                    if (index < sourceData.track.length - 1) {
+                        // 若下个节点在_exChildren中时
+                        let nextId = sourceData.track[index + 1];
+                        let children = node.data.children || node.data._children;
+                        // 若在限制收起节点中找到，则当前节点需要处于展开状态
+                        let ifInExChildren = node.data?._exChildren?.find((v) => v[this.symbolKey] == nextId);
+                        if (ifInExChildren) {
+                            // 找到同向的展开节点
+                            let expendNode = children.find(
+                                (v) => typeof v._isexpend == 'boolean' && v._sign == ifInExChildren._sign
+                            );
+                            // 若当前节点状态为收起，则需要展开
+                            if (!expendNode._isexpend) {
+                                expendNode._isexpend = true;
+                                children.splice(
+                                    children.indexOf(expendNode),
+                                    0,
+                                    ...node.data._exChildren.filter((v) => v._sign == expendNode._sign)
+                                );
+                            }
+                        }
+                    }
+                    this.drawView();
+                }
+            });
         }
     }
 };
