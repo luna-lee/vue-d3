@@ -90,8 +90,8 @@ export default {
             config: {
                 node: {
                     on: {
-                        clickFetchChildren: (data, node, d3) => {
-                            console.log(data, node, d3);
+                        clickFetchChildren: (data, node, svg) => {
+                            console.log(data, node, svg);
                             return new Promise((r) => {
                                 setTimeout(() => {
                                     r([
@@ -140,11 +140,11 @@ export default {
                                 }, 2000);
                             });
                         },
-                        click: (e, d, node, d3) => {
-                            // console.log(e, d, node, d3);
+                        click: (e, d, node, svg) => {
+                            // console.log(e, d, node, svg);
                             this.$refs.hierarchy.hiddenCustomView();
                         },
-                        contextmenu: (e, d, node, d3) => {
+                        contextmenu: (e, d, node, svg) => {
                             e.preventDefault();
                             this.currentNode = d.data;
                             this.$refs.hierarchy.showCustomView(e, d);

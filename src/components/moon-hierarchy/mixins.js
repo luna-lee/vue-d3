@@ -285,19 +285,19 @@ export default {
                     this.onNodeClick(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
                     const node = this.svg.select(`#${id}`);
-                    this.nodeListener['click']?.(_, d, node, d3);
+                    this.nodeListener['click']?.(_, d, node, this.svg);
                 })
                 .on('mouseover', (_, d) => {
                     this.onNodeMouseOver(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
                     const node = this.svg.select(`#${id}`);
-                    this.nodeListener['mouseover']?.(_, d, node, d3);
+                    this.nodeListener['mouseover']?.(_, d, node, this.svg);
                 })
                 .on('mouseout', (_, d) => {
                     this.onNodeMouseOut(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
                     const node = this.svg.select(`#${id}`);
-                    this.nodeListener['mouseout']?.(_, d, node, d3);
+                    this.nodeListener['mouseout']?.(_, d, node, this.svg);
                 });
             //自定义属性，除了id与transform
             this.setNodeDefaultAttr(nodes);
@@ -338,15 +338,15 @@ export default {
                 node.on('click', (_) => {
                     _.stopPropagation();
                     this.onNodeClick(item);
-                    this.nodeListener['click']?.(_, item, node, d3);
+                    this.nodeListener['click']?.(_, item, node, this.svg);
                 })
                     .on('mouseover', (_) => {
                         this.onNodeMouseOver(item);
-                        this.nodeListener['mouseover']?.(_, item, node, d3);
+                        this.nodeListener['mouseover']?.(_, item, node, this.svg);
                     })
                     .on('mouseout', (_) => {
                         this.onNodeMouseOut(item);
-                        this.nodeListener['mouseout']?.(_, item, node, d3);
+                        this.nodeListener['mouseout']?.(_, item, node, this.svg);
                     })
                     .transition()
                     .duration(this.duration)
@@ -492,7 +492,7 @@ export default {
                         // node可能时一个序列，重新获取下对象
                         const id = this.getNodeId(d.data[this.symbolKey]);
                         const _node = this.svg.select(`#${id}`);
-                        listener[key](e, d, _node, d3);
+                        listener[key](e, d, _node, this.svg);
                     });
                 }
             });
@@ -672,7 +672,7 @@ export default {
                     let childrenList = await this.nodeListener['clickFetchChildren']?.(
                         sourceData,
                         this.svg.select(`#${this.getNodeId(sourceData[this.symbolKey])}`),
-                        d3
+                        this.svg
                     );
                     if (Array.isArray(childrenList) && childrenList.length) {
                         // 所有的父节点trigger中都需要添加新增的字节id

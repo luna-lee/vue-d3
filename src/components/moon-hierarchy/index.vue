@@ -52,9 +52,6 @@ export default {
         continueZoom() {
             this.$refs.MoonHierarchy.continueZoom();
         },
-        getTranslateOffset(d) {
-            return this.$refs.MoonHierarchy.getTranslateOffset(d);
-        },
         showCustomView(e, d, width, height, priority) {
             this.$refs.MoonHierarchy.drawCustomView(e, d, width, height, priority);
         },
@@ -140,7 +137,6 @@ export default {
         padding: 5px;
         border-radius: 8px;
         box-sizing: border-box;
-        // box-shadow: 0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 3px 6px -4px rgba(0, 0, 0, 0.12), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
         cursor: pointer;
     }
     .moon-hierarchy-arrow {
