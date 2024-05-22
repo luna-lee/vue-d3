@@ -406,7 +406,7 @@ export default {
                 },
                 negative: {
                     // 右上
-                    rt: [d.x + nodeWidth / 2, -d.y - nodeHeight],
+                    rt: [d.x + nodeWidth / 2, -d.y],
                     // 右下
                     rb: [d.x + nodeWidth / 2, -d.y + nodeHeight],
                     // 左上
@@ -430,7 +430,7 @@ export default {
                 },
                 negative: {
                     // 右上
-                    rt: [d.x + nodeWidth / 2, -d.y - nodeHeight],
+                    rt: [d.x + nodeWidth / 2, -d.y - height],
                     // 右下
                     rb: [d.x + nodeWidth / 2, -d.y + nodeHeight],
                     // 左上

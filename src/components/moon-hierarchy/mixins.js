@@ -362,12 +362,15 @@ export default {
                 this.addShapEexpendFold(node, item);
             }
         },
-        removeNode(id, redraw = true) {
+        removeNode(id, redraw = true, canRemoveExpendNode = false) {
             let root = this.treeDataFactory.treeData[0];
             if (id == root[this.symbolKey]) {
                 throw '根节点不能删除';
             }
             const sourceData = this.treeDataFactory.objById[id];
+            if (typeof sourceData._isexpend == 'boolean' && !canRemoveExpendNode) {
+                throw '展开/收起节点不能手动删除！';
+            }
             const node = this.svg.select(`#${this.getNodeId(id)}`);
             // 移除子项
             sourceData.trigger.forEach((subId) => {
@@ -427,7 +430,7 @@ export default {
                             if (sameList.length + _sameList.length <= this.limit) {
                                 //  移除展开节点
                                 let expendNode = arr.find((v) => typeof v._isexpend == 'boolean' && v._sign == sourceData._sign);
-                                if (expendNode) this.removeNode(expendNode[this.symbolKey], false);
+                                if (expendNode) this.removeNode(expendNode[this.symbolKey], false, true);
                             }
                         }
                     }
@@ -484,6 +487,8 @@ export default {
                 if (!except.includes(key)) {
                     node.on(key, (e, d) => {
                         if (qd) d = qd;
+                        // 展开收起按钮节点不绑定自定义节点事件
+                        if (typeof d.data._isexpend == 'boolean') return;
                         // node可能时一个序列，重新获取下对象
                         const id = this.getNodeId(d.data[this.symbolKey]);
                         const _node = this.svg.select(`#${id}`);
@@ -586,6 +591,10 @@ export default {
         // 向目标节点添加子节点，childrenList是一个扁平化的树数据
         addNodeToTargetNode(targetNodeId, childrenList, _sign) {
             const sourceData = this.treeDataFactory.objById[targetNodeId];
+
+            if (typeof sourceData._isexpend == 'boolean') {
+                throw '展开/收起节点不能新增子节点！';
+            }
             // 若目标节点时根节点，
             // 蝴蝶布局，可以传入第3个参数，控制新增的节点的方向。否则与当前节点方向一致
             // 下-上，右-左布局，_sign设置为-1，其他情况设置为1
