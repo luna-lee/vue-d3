@@ -558,20 +558,22 @@ export default {
         },
         // 向目标节点添加子节点，childrenList是一个扁平化的树数据
         addNodeToTargetNode(targetNodeId, childrenList, _sign) {
-            console.log(_sign);
-
             const sourceData = this.treeDataFactory.objById[targetNodeId];
-            // 若目标节点时根节点，可以传入第3个参数，控制新增的节点的方向。否则与当前节点方向一致
-            let root = this.treeDataFactory.treeData[0];
 
+            // 若目标节点时根节点，
+            // 蝴蝶布局，可以传入第3个参数，控制新增的节点的方向。否则与当前节点方向一致
+            // 下-上，右-左布局，_sign设置为-1，其他情况设置为1
+            let root = this.treeDataFactory.treeData[0];
             if (targetNodeId == root[this.symbolKey]) {
-                _sign = _sign || sourceData._sign;
+                if (this.layout == 'bf' && [-1, 1].includes(_sign)) _sign = _sign || sourceData._sign;
+                else if (this.layout == 'bt' || this.layout == 'rl') _sign = -1;
+                else _sign = 1;
             } else _sign = sourceData._sign;
-            console.log(_sign);
+
+            // 获取当前布局节点，
             let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == targetNodeId);
+            // 设置新增节点动画的起点
             this.lastClickNode = node;
-            /*    const node = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
-            node.classed('moon-hierarchy-node-expend', true); */
             try {
                 if (Array.isArray(childrenList) && childrenList.length) {
                     let list = childrenList.map((v) => {
