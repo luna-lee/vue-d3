@@ -233,8 +233,9 @@ export default {
         setNodeClassAttr(nodes) {
             const customNodeAttrs = this.config.node?.attrs || {};
             nodes.attr('class', function (d) {
-                const currentClass = d3.select(this).attr('class') || 'moon-hierarchy-node';
+                const currentClass = d3.select(this).attr('class') || '';
                 const classList = currentClass.split(' ');
+                classList.push('moon-hierarchy-node');
                 if (d.data.track.length == 1) classList.push('moon-hierarchy-node-root');
                 if (typeof d.data._isexpend == 'boolean') classList.push('moon-hierarchy-node-limit-button');
                 if (isNonEmptyArray(d.data.children)) classList.push('moon-hierarchy-node-expend');
