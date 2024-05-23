@@ -335,6 +335,10 @@ export default {
 
             dataList.forEach((data) => {
                 let old = this.treeDataFactory.objById[data[this.symbolKey]];
+                if (!old) {
+                    console.error(`没有匹配到${this.symbolKey}字段${data[this.symbolKey]}值对应的数据`);
+                    return;
+                }
                 let backup = Object.keys(old).reduce((obj, key) => {
                     if (exAttrs.includes(key) || key.startsWith('_')) obj[key] = old[key];
                     return obj;
@@ -386,13 +390,21 @@ export default {
         removeNode(id, redraw = true, canRemoveExpendNode = false) {
             let root = this.treeDataFactory.treeData[0];
             if (id == root[this.symbolKey]) {
-                throw '根节点不能删除';
+                console.error(`根节点不能删除`);
+                return;
             }
             const sourceData = this.treeDataFactory.objById[id];
+            if (!sourceData) {
+                console.error(`没有找到${id}对应的数据！`);
+                return;
+            }
+
             if (typeof sourceData._isexpend == 'boolean' && !canRemoveExpendNode) {
-                throw '展开/收起节点不能手动删除！';
+                console.error(`展开/收起节点不能手动删除！`);
+                return;
             }
             const node = this.svg.select(`#${this.getNodeId(id)}`);
+
             // 移除子项
             sourceData.trigger.forEach((subId) => {
                 const subNode = this.svg.select(`#${this.getNodeId(subId)}`);
@@ -616,9 +628,13 @@ export default {
         // 向目标节点添加子节点，childrenList是一个扁平化的树数据
         addNodeToTargetNode(targetNodeId, childrenList, _sign) {
             const sourceData = this.treeDataFactory.objById[targetNodeId];
-
+            if (!sourceData) {
+                console.error(`没有找到${targetNodeId}对应的数据！`);
+                return;
+            }
             if (typeof sourceData._isexpend == 'boolean') {
-                throw '展开/收起节点不能新增子节点！';
+                console.error('展开/收起节点不能新增子节点！');
+                return;
             }
             // 若目标节点时根节点，
             // 蝴蝶布局，可以传入第3个参数，控制新增的节点的方向。否则与当前节点方向一致
@@ -860,7 +876,7 @@ export default {
                 if (this.currentScale < scaleRange[0]) this.currentScale = scaleRange[0];
                 if (this.currentScale > scaleRange[1]) this.currentScale = scaleRange[1];
                 this.moveToCenter();
-            } else throw '缩放参数必须数字';
+            } else console.error('缩放参数必须数字');
         },
         setAttrByOpt(node, opt = {}) {
             Object.keys(opt).map((key) => {
@@ -991,6 +1007,10 @@ export default {
         },
         expendToNode(targetNodeId, eventList = []) {
             const sourceData = this.treeDataFactory.objById[targetNodeId];
+            if (!sourceData) {
+                console.error(`没有找到${targetNodeId}对应的数据`);
+                return;
+            }
             sourceData.track.forEach((id, index) => {
                 if (id != targetNodeId) {
                     let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
