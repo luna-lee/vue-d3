@@ -75,7 +75,8 @@ export default {
             currentScale: 1,
             treeDataFactory: { treeData: [], leafs: [], objById: {}, flatData: [] },
             exceptListener: ['click', 'clickFetchChildren', 'mouseover', 'mouseout'],
-            showCustomView: false
+            showCustomView: false,
+            InnerChangeTreeData: false //为true时，下次更新不触发重绘
         };
     },
     computed: {
@@ -192,6 +193,10 @@ export default {
             this.$refs.svg.append(this.svg.node());
         },
         drawContainer() {
+            if (this.InnerChangeTreeData) {
+                this.InnerChangeTreeData = false;
+                return;
+            }
             // reset
             this.container && this.container.remove();
             Object.assign(this.$data, this.$options.data(), { svg: this.svg });
@@ -330,6 +335,13 @@ export default {
                     return obj;
                 }, {});
                 Object.assign(old, data, backup);
+
+                // 内部修改数据不触发重绘,
+                this.InnerChangeTreeData = true;
+                let sourceData = this.treeData.find((v) => v[this.symbolKey] == data[this.symbolKey]);
+                Object.keys(sourceData).forEach((key) => {
+                    sourceData[key] = old[key];
+                });
             });
             this.drawView();
         },
@@ -445,6 +457,11 @@ export default {
 
             // 节点 以及所有子节点
             arrayRemoveItem(this.treeDataFactory.flatData, (item) => {
+                return [...sourceData.trigger, id].includes(item[this.symbolKey]);
+            });
+            // 内部修改数据不触发重绘
+            this.InnerChangeTreeData = true;
+            arrayRemoveItem(this.treeData, (item) => {
                 return [...sourceData.trigger, id].includes(item[this.symbolKey]);
             });
             [...sourceData.trigger, id].forEach((id) => {
@@ -613,70 +630,70 @@ export default {
             let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == targetNodeId);
             // 设置新增节点动画的起点
             this.lastClickNode = node;
-            try {
-                if (Array.isArray(childrenList) && childrenList.length) {
-                    // 所有的父节点trigger中都需要添加新增的字节id
-                    sourceData.track.map((id) => {
-                        this.treeDataFactory.objById[id].trigger.push(...childrenList.map((v) => v[this.symbolKey]));
-                    });
+            // 不是数组时构造一个数组
+            if (childrenList && !Array.isArray(childrenList)) childrenList = [childrenList];
+            if (childrenList.length) {
+                // 所有的父节点trigger中都需要添加新增的字节id
+                sourceData.track.map((id) => {
+                    this.treeDataFactory.objById[id].trigger.push(...childrenList.map((v) => v[this.symbolKey]));
+                });
 
-                    let list = childrenList.map((v) => {
-                        v._sign = _sign;
-                        v[this.inner_treeOptions.pId] = sourceData[this.symbolKey];
-                        return v;
-                    });
-                    // 判断列表是否有当前数据
-                    let rootIndex = list.findIndex((v) => v[this.symbolKey] == sourceData[this.symbolKey]);
-                    //有则移除
-                    if (rootIndex != -1) list.splice(rootIndex, 1);
-                    // 重新拷贝一份当前数据，清空里面的children，用做后面重新构建一个树结构数据。
-                    const copySourceData = { ...sourceData };
-                    copySourceData.children = [];
-                    list.push(copySourceData);
-                    // 重新构建一个树结构数据。
-                    let { objById, flatData } = flatToTree(list, this.symbolKey, this.inner_treeOptions.pId);
+                let list = childrenList.map((v) => {
+                    v._sign = _sign;
+                    v[this.inner_treeOptions.pId] = sourceData[this.symbolKey];
+                    return v;
+                });
+                // 判断列表是否有当前数据
+                let rootIndex = list.findIndex((v) => v[this.symbolKey] == sourceData[this.symbolKey]);
+                //有则移除
+                if (rootIndex != -1) list.splice(rootIndex, 1);
+                // 重新拷贝一份当前数据，清空里面的children，用做后面重新构建一个树结构数据。
+                const copySourceData = { ...sourceData };
+                copySourceData.children = [];
+                list.push(copySourceData);
+                // 重新构建一个树结构数据。
+                let { objById, flatData } = flatToTree(list, this.symbolKey, this.inner_treeOptions.pId);
 
-                    let sutTree = objById[sourceData[this.symbolKey]].children;
-                    if (sourceData._exChildren?.length) {
-                        let children = sourceData.children || sourceData._children;
-                        // 展开节点
-                        let lastExpendNodeIndex = children.findIndex((v) => typeof v._isexpend == 'boolean' && v._sign == _sign);
-                        let lastExpendNode = children[lastExpendNodeIndex];
-                        sourceData._exChildren.push(...sutTree);
-                        // 若处于展开状态，也要添加在children中,插入到展开按钮前
-                        if (lastExpendNode?._isexpend) {
-                            sourceData.children.splice(lastExpendNodeIndex, 0, ...sutTree);
-                        }
-                        // 展开限制隐藏的项
-                        if (!lastExpendNode._isexpend) {
-                            lastExpendNode._isexpend = true;
-                            children.splice(
-                                children.indexOf(lastExpendNode),
-                                0,
-                                ...node.data._exChildren.filter((v) => v._sign == lastExpendNode._sign)
-                            );
-                        }
-                    } else {
-                        if (sourceData.children) {
-                            sourceData.children.push(...sutTree);
-                        } else if (sourceData._children) {
-                            sourceData._children.push(...sutTree);
-                        } else sourceData.children = sutTree;
+                let sutTree = objById[sourceData[this.symbolKey]].children;
+                if (sourceData._exChildren?.length) {
+                    let children = sourceData.children || sourceData._children;
+                    // 展开节点
+                    let lastExpendNodeIndex = children.findIndex((v) => typeof v._isexpend == 'boolean' && v._sign == _sign);
+                    let lastExpendNode = children[lastExpendNodeIndex];
+                    sourceData._exChildren.push(...sutTree);
+                    // 若处于展开状态，也要添加在children中,插入到展开按钮前
+                    if (lastExpendNode?._isexpend) {
+                        sourceData.children.splice(lastExpendNodeIndex, 0, ...sutTree);
                     }
-                    // 将新数据插入treeDataFactory中
-                    flatData
-                        .filter((v) => v[this.symbolKey] != sourceData[this.symbolKey])
-                        .forEach((v) => {
-                            let id = v[this.symbolKey];
-                            this.treeDataFactory.objById[id] = v;
-                            this.treeDataFactory.flatData.push(v);
-                        });
+                    // 展开限制隐藏的项
+                    if (!lastExpendNode._isexpend) {
+                        lastExpendNode._isexpend = true;
+                        children.splice(
+                            children.indexOf(lastExpendNode),
+                            0,
+                            ...node.data._exChildren.filter((v) => v._sign == lastExpendNode._sign)
+                        );
+                    }
+                } else {
+                    if (sourceData.children) {
+                        sourceData.children.push(...sutTree);
+                    } else if (sourceData._children) {
+                        sourceData._children.push(...sutTree);
+                    } else sourceData.children = sutTree;
                 }
-            } catch (error) {
-                console.error(error);
+                // 将新数据插入treeDataFactory中
+                flatData
+                    .filter((v) => v[this.symbolKey] != sourceData[this.symbolKey])
+                    .forEach((v) => {
+                        let id = v[this.symbolKey];
+                        this.treeDataFactory.objById[id] = v;
+                        this.treeDataFactory.flatData.push(v);
+                    });
             }
-
             this.onNodeExpendOrFold(node, true);
+            // 内部修改数据不触发重绘
+            this.InnerChangeTreeData = true;
+            this.treeData.push(...childrenList);
         },
         async onClickFetchChildren(sourceData) {
             if (sourceData._hasChildren && !sourceData._loading) {
