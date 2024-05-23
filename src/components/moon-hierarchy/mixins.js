@@ -949,7 +949,11 @@ export default {
                     let id = this.drawCustomViewLastConfig.d.data[this.symbolKey];
                     let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
                     let { e, width, height, priority } = this.drawCustomViewLastConfig;
-                    this.drawCustomView(e, node, width, height, priority);
+                    if (node) {
+                        this.drawCustomView(e, node, width, height, priority);
+                    } else {
+                        this.hiddenCustomView();
+                    }
                 } else {
                     this.hiddenCustomView();
                 }
