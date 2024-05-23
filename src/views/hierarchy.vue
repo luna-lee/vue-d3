@@ -35,7 +35,7 @@
             ref="hierarchy"
             :mode="mode"
             :treeData="treeData"
-            :treeOptions="{ id: 'code', pId: 'pcode' }"
+            :treeOptions="treeOptions"
             :layout="layout"
             :negativeIds="['qydak', 'root1', 'root2', 'root3']"
             :config="config"
@@ -86,6 +86,7 @@ export default {
             layout: 'bf',
             treeData: [],
             currentNode: {},
+            treeOptions: { id: 'code', pId: 'pcode' },
             width: 0,
             height: 0,
             config: {
@@ -178,7 +179,8 @@ export default {
                 },
                 customView: {
                     width: 120,
-                    height: 100
+                    height: 100,
+                    duration: 400
                 },
                 arrow: {
                     // show: false
@@ -215,7 +217,7 @@ export default {
         },
         onAdd() {
             this.$refs.hierarchy.addNode(
-                this.currentNode.code,
+                this.currentNode[this.treeOptions.id],
                 [
                     {
                         id: 'new' + new Date().getTime(),
@@ -223,14 +225,14 @@ export default {
                         code: 'new' + new Date().getTime(),
                         modelType: '',
                         domainId: '',
-                        pcode: this.currentNode.code
+                        pcode: this.currentNode[this.treeOptions.id]
                     }
                 ],
                 -1
             );
         },
         onRemove() {
-            this.$refs.hierarchy.removeNodeById(this.currentNode.code);
+            this.$refs.hierarchy.removeNodeById(this.currentNode[this.treeOptions.id]);
         },
         onUpdate() {
             this.$refs.hierarchy.updateNodeByData({ ...this.currentNode, name: 'hello', children: [] });

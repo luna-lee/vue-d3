@@ -370,7 +370,7 @@ export default {
             }
             return lineList;
         },
-        drawCustomView(e, d, width, height, priority) {
+        drawCustomView(e, d, width, height, priority, duration) {
             // 不指width, height时使用全局配置
             width = width || this.config?.customView?.width || 100;
             height = height || this.config?.customView?.height || 50;
@@ -463,7 +463,8 @@ export default {
                 height,
                 transform,
                 transform_begin,
-                hasChangeNode
+                hasChangeNode,
+                duration
             });
         }
     }

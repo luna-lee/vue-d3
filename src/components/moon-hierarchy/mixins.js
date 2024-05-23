@@ -928,7 +928,10 @@ export default {
                 else return _;
             }, this.foreignObject);
             if (attrs.hasChangeNode) this.foreignObject.attr('transform', attrs.transform_begin);
-            this.foreignObject.transition().duration(this.duration).attr('transform', attrs.transform);
+            this.foreignObject
+                .transition()
+                .duration(attrs.duration || this.config?.customView?.duration || this.duration)
+                .attr('transform', attrs.transform);
             this.foreignObject.on('click', (e) => e.stopPropagation());
             this.foreignObject.node().append(this.$refs.CoustomView);
         },
