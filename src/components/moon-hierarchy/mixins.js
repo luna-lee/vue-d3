@@ -165,13 +165,14 @@ export default {
             this.treeDataFactory = flatToTree(this.treeData, this.inner_treeOptions.id, this.inner_treeOptions.pId);
 
             // 移除treeDataFactory.flatData,treeDataFactory.objById中的所有非root子节点的数据
-            let root = this.treeDataFactory.treeData[0];
             let removedId = [];
+            if (this.treeDataFactory.treeData.length > 1) {
+                this.treeDataFactory.treeData.slice(1).forEach((item) => {
+                    removedId.push(item[this.symbolKey], ...item.trigger);
+                });
+            }
             arrayRemoveItem(this.treeDataFactory.flatData, (item) => {
-                if (!root.trigger.includes(item[this.symbolKey])) {
-                    removedId.push(item[this.symbolKey]);
-                    return true;
-                } else return false;
+                return removedId.includes(item[this.symbolKey]);
             });
             removedId.forEach((id) => {
                 delete this.treeDataFactory.objById[id];
@@ -575,7 +576,6 @@ export default {
             this.lastClickNode = d;
             const symbolKey = this.symbolKey;
             const sourceData = this.treeDataFactory.objById[this.lastClickNode.data[symbolKey]];
-
             if (isNonEmptyArray(sourceData.children)) {
                 if (!this.foldShape) this.onNodeExpendOrFold(d, false);
             } else if (!this.expendShape) this.onNodeExpendOrFold(d, true);
