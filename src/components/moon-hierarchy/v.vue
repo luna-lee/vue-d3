@@ -64,7 +64,7 @@ export default {
             const rectShap = {
                 name: 'rect',
                 attrs: {
-                    ...nodeconfig.rect,
+                    ...nodeconfig.rect.attrs,
                     class: (d) => this.setShapClass(d, 'rect', nodeconfig),
                     height: nodeHeight,
                     width: (d) => d.data._nodeConfig.nodeWidth
@@ -97,7 +97,7 @@ export default {
                     {
                         name: 'text',
                         attrs: {
-                            ...nodeconfig.text,
+                            ...nodeconfig.text.attrs,
                             class: (d) => this.setShapClass(d, 'text', nodeconfig),
                             'font-size': fontSize,
                             'text-anchor': 'middle',
@@ -132,7 +132,7 @@ export default {
             const plusShap = {
                 name: 'g',
                 attrs: {
-                    ...nodeconfig.plus,
+                    ...nodeconfig.plus.attrs,
                     class: (d) => this.setShapClass(d, 'plus', nodeconfig),
                     transform: (d) =>
                         `translate(${d.data._nodeConfig.nodeWidth / 2},${

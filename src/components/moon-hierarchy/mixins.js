@@ -232,19 +232,22 @@ export default {
         },
         setNodeClassAttr(nodes) {
             const customNodeAttrs = this.config.node?.attrs || {};
-            nodes.attr('class', (d) => {
-                let className = 'moon-hierarchy-node';
-                if (d.data.track.length == 1) className += ' moon-hierarchy-node-root';
-                if (typeof d.data._isexpend == 'boolean') className += ' moon-hierarchy-node-limit-button';
-                if (isNonEmptyArray(d.data.children)) className += ' moon-hierarchy-node-expend';
+            nodes.attr('class', function (d) {
+                const currentClass = d3.select(this).attr('class') || 'moon-hierarchy-node';
+                const classList = currentClass.split(' ');
+                if (d.data.track.length == 1) classList.push('moon-hierarchy-node-root');
+                if (typeof d.data._isexpend == 'boolean') classList.push('moon-hierarchy-node-limit-button');
+                if (isNonEmptyArray(d.data.children)) classList.push('moon-hierarchy-node-expend');
                 if (isNonEmptyArray(d.data.children) || isNonEmptyArray(d.data._children) || d.data._hasChildren)
-                    className += ' moon-hierarchy-node-haschildren';
+                    classList.push('moon-hierarchy-node-haschildren');
                 let classContent = customNodeAttrs.class;
                 if (classContent) {
-                    if (typeof classContent == 'function') return `${className} ${classContent(d) || ''}`;
-                    if (typeof classContent == 'string') return `${className} ${classContent}`;
+                    if (typeof classContent == 'function') {
+                        classList.push(classContent(d) || '');
+                    }
+                    if (typeof classContent == 'string') return classList.push(classContent);
                 }
-                return className;
+                return [...new Set(classList)].join(' ');
             });
         },
         setNodeDefaultAttr(nodes) {
