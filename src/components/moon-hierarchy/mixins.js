@@ -163,6 +163,19 @@ export default {
         },
         initTreeData() {
             this.treeDataFactory = flatToTree(this.treeData, this.inner_treeOptions.id, this.inner_treeOptions.pId);
+
+            // 移除treeDataFactory.flatData,treeDataFactory.objById中的所有非root子节点的数据
+            let root = this.treeDataFactory.treeData[0];
+            let removedId = [];
+            arrayRemoveItem(this.treeDataFactory.flatData, (item) => {
+                if (!root.trigger.includes(item[this.symbolKey])) {
+                    removedId.push(item[this.symbolKey]);
+                    return true;
+                } else return false;
+            });
+            removedId.forEach((id) => {
+                delete this.treeDataFactory.objById[id];
+            });
             this.setSign();
         },
         createSvg() {
@@ -336,8 +349,7 @@ export default {
             dataList.forEach((data) => {
                 let old = this.treeDataFactory.objById[data[this.symbolKey]];
                 if (!old) {
-                    console.error(`没有匹配到${this.symbolKey}字段${data[this.symbolKey]}值对应的数据`);
-                    return;
+                    throw `moon-hierarchy组件：画布中没有匹配到${this.symbolKey}=${data[this.symbolKey]}的节点`;
                 }
                 let backup = Object.keys(old).reduce((obj, key) => {
                     if (exAttrs.includes(key) || key.startsWith('_')) obj[key] = old[key];
@@ -387,23 +399,22 @@ export default {
                 this.addShapEexpendFold(node, item);
             }
         },
-        removeNode(id, redraw = true, canRemoveExpendNode = false) {
+        removeNode(targetNodeId, redraw = true, canRemoveExpendNode = false) {
             let root = this.treeDataFactory.treeData[0];
-            if (id == root[this.symbolKey]) {
-                console.error(`根节点不能删除`);
-                return;
+            if (!targetNodeId) throw `moon-hierarchy组件：请传入目标节点数据中${this.symbolKey}的值`;
+
+            if (targetNodeId == root[this.symbolKey]) {
+                throw `moon-hierarchy组件：根节点不能删除`;
             }
-            const sourceData = this.treeDataFactory.objById[id];
+            const sourceData = this.treeDataFactory.objById[targetNodeId];
             if (!sourceData) {
-                console.error(`没有找到${id}对应的数据！`);
-                return;
+                throw `moon-hierarchy组件：画布中没有匹配到${this.symbolKey}=${targetNodeId}的节点`;
             }
 
             if (typeof sourceData._isexpend == 'boolean' && !canRemoveExpendNode) {
-                console.error(`展开/收起节点不能手动删除！`);
-                return;
+                throw `moon-hierarchy组件：展开/收起节点不能手动删除！`;
             }
-            const node = this.svg.select(`#${this.getNodeId(id)}`);
+            const node = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
 
             // 移除子项
             sourceData.trigger.forEach((subId) => {
@@ -414,7 +425,7 @@ export default {
             const links = this.treeLayoutData.links();
             for (let i = 0; i < links.length; i++) {
                 let item = links[i];
-                let idList = [...sourceData.trigger, id];
+                let idList = [...sourceData.trigger, targetNodeId];
                 if (idList.includes(item.source.data[this.symbolKey]) || idList.includes(item.target.data[this.symbolKey])) {
                     const id = this.getLinkId(item.source.data[this.symbolKey], item.target.data[this.symbolKey]);
                     const linkNode = this.svg.select(`#${id}`);
@@ -428,7 +439,7 @@ export default {
             if (parentNode) {
                 // 从父节点中_exChildren中移除
                 if (parentNode._exChildren) {
-                    let index = parentNode._exChildren.findIndex((v) => v[this.symbolKey] == id);
+                    let index = parentNode._exChildren.findIndex((v) => v[this.symbolKey] == targetNodeId);
                     if (index >= 0) parentNode._exChildren.splice(index, 1);
                 }
                 // 从父节点中children,_children中移除
@@ -437,7 +448,7 @@ export default {
                     if (arr) {
                         // 移除当前节点
                         arr.splice(
-                            arr.findIndex((v) => v[this.symbolKey] == id),
+                            arr.findIndex((v) => v[this.symbolKey] == targetNodeId),
                             1
                         );
                         // 判断是否需要移除展开按钮节点,
@@ -472,18 +483,27 @@ export default {
                 pChildren('_children');
             }
 
-            // 节点 以及所有子节点
+            // 移除treeDataFactory中所有节点 以及所有子节点
             arrayRemoveItem(this.treeDataFactory.flatData, (item) => {
-                return [...sourceData.trigger, id].includes(item[this.symbolKey]);
+                return [...sourceData.trigger, targetNodeId].includes(item[this.symbolKey]);
             });
+            [...sourceData.trigger, targetNodeId].forEach((id) => {
+                delete this.treeDataFactory.objById[id];
+            });
+
+            // 所有的父节点trigger中都需要移除对应的id
+            parentNode.track.map((id) => {
+                arrayRemoveItem(this.treeDataFactory.objById[id].trigger, (_id) => {
+                    return [...sourceData.trigger, targetNodeId].includes(_id);
+                });
+            });
+
             // 内部修改数据不触发重绘
             this.InnerChangeTreeData = true;
             arrayRemoveItem(this.treeData, (item) => {
-                return [...sourceData.trigger, id].includes(item[this.symbolKey]);
+                return [...sourceData.trigger, targetNodeId].includes(item[this.symbolKey]);
             });
-            [...sourceData.trigger, id].forEach((id) => {
-                delete this.treeDataFactory.objById[id];
-            });
+
             if (redraw) this.drawView();
         },
         removeNodeById(ids) {
@@ -627,14 +647,13 @@ export default {
         },
         // 向目标节点添加子节点，childrenList是一个扁平化的树数据
         addNodeToTargetNode(targetNodeId, childrenList, _sign) {
+            if (!targetNodeId) throw `moon-hierarchy组件：请传入目标节点数据中${this.symbolKey}的值`;
             const sourceData = this.treeDataFactory.objById[targetNodeId];
             if (!sourceData) {
-                console.error(`没有找到${targetNodeId}对应的数据！`);
-                return;
+                throw `moon-hierarchy组件：画布中没有匹配到${this.symbolKey}=${targetNodeId}的节点`;
             }
             if (typeof sourceData._isexpend == 'boolean') {
-                console.error('展开/收起节点不能新增子节点！');
-                return;
+                throw '展开/收起节点不能新增子节点！';
             }
             // 若目标节点时根节点，
             // 蝴蝶布局，可以传入第3个参数，控制新增的节点的方向。否则与当前节点方向一致
@@ -757,7 +776,7 @@ export default {
                     this.setLoadingIcon(sourceData, false);
                 } catch (error) {
                     this.setLoadingIcon(sourceData, false);
-                    console.error(error);
+                    throw error;
                 }
             }
         },
@@ -876,7 +895,7 @@ export default {
                 if (this.currentScale < scaleRange[0]) this.currentScale = scaleRange[0];
                 if (this.currentScale > scaleRange[1]) this.currentScale = scaleRange[1];
                 this.moveToCenter();
-            } else console.error('缩放参数必须数字');
+            } else throw '缩放参数必须数字';
         },
         setAttrByOpt(node, opt = {}) {
             Object.keys(opt).map((key) => {
@@ -1006,10 +1025,10 @@ export default {
             }
         },
         expendToNode(targetNodeId, eventList = []) {
+            if (!targetNodeId) throw `moon-hierarchy组件：请传入目标节点数据中${this.symbolKey}的值`;
             const sourceData = this.treeDataFactory.objById[targetNodeId];
             if (!sourceData) {
-                console.error(`没有找到${targetNodeId}对应的数据`);
-                return;
+                throw `moon-hierarchy组件：画布中没有匹配到${this.symbolKey}=${targetNodeId}的节点`;
             }
             sourceData.track.forEach((id, index) => {
                 if (id != targetNodeId) {

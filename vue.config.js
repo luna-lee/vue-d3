@@ -24,7 +24,7 @@ module.exports = {
             config.plugin('buildPackagePlugin').use({
                 apply(compiler) {
                     // 在构建结束时删除 demo.html 文件
-                    compiler.hooks.afterEmit.tap('AfterEmitPlugin', (compilation) => {
+                    compiler.hooks.afterEmit.tap('AfterEmitPlugin', () => {
                         const outputPath = compiler.options.output.path;
                         const deleteFile = [
                             'moon-hierarchy.common.js',
@@ -45,7 +45,10 @@ module.exports = {
                             deleteFile.forEach((f) => {
                                 del(outputPath + '/' + f);
                             });
-                            fs.copySync(__dirname + '/src/components/moon-hierarchy/readme.md', __dirname + '/packages/readme.md');
+                            fs.copySync(
+                                __dirname + '/src/components/moon-hierarchy/readme.md',
+                                __dirname + '/packages/readme.md'
+                            );
                         }, 3000);
                     });
                 }
