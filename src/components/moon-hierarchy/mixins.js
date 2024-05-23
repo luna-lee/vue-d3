@@ -154,6 +154,13 @@ export default {
         }
     },
     methods: {
+        // 格式化数据
+        formatToArray(target) {
+            if (target) {
+                if (Array.isArray(target)) return target;
+                else return [target];
+            } else return [];
+        },
         initTreeData() {
             this.treeDataFactory = flatToTree(this.treeData, this.inner_treeOptions.id, this.inner_treeOptions.pId);
             this.setSign();
@@ -322,9 +329,7 @@ export default {
             this.addShapEexpendFold(nodes);
         },
         updateNodeByData(dataList) {
-            if (!Array.isArray(dataList)) {
-                dataList = [dataList];
-            }
+            dataList = this.formatToArray(dataList);
             // 不更新的属性项
             let exAttrs = [this.inner_treeOptions.id, this.inner_treeOptions.pId, 'children', 'level', 'track', 'trigger'];
 
@@ -470,14 +475,13 @@ export default {
             if (redraw) this.drawView();
         },
         removeNodeById(ids) {
-            if (!Array.isArray(ids)) {
-                ids = [ids];
-            }
+            ids = this.formatToArray(ids);
             ids.forEach((id) => {
                 this.removeNode(id, false);
             });
             this.drawView();
         },
+
         addShapEexpendFold(node, qt) {
             if (this.expendShape != this.foldShape) {
                 if (this.expendShape) {
@@ -631,7 +635,7 @@ export default {
             // 设置新增节点动画的起点
             this.lastClickNode = node;
             // 不是数组时构造一个数组
-            if (childrenList && !Array.isArray(childrenList)) childrenList = [childrenList];
+            childrenList = this.formatToArray(childrenList);
             if (childrenList.length) {
                 // 所有的父节点trigger中都需要添加新增的字节id
                 sourceData.track.map((id) => {
@@ -704,7 +708,8 @@ export default {
                         this.svg.select(`#${this.getNodeId(sourceData[this.symbolKey])}`),
                         this.svg
                     );
-                    if (Array.isArray(childrenList) && childrenList.length) {
+                    childrenList = this.formatToArray(childrenList);
+                    if (childrenList.length) {
                         // 所有的父节点trigger中都需要添加新增的字节id
                         sourceData.track.map((id) => {
                             this.treeDataFactory.objById[id].trigger.push(...childrenList.map((v) => v[this.symbolKey]));
@@ -984,7 +989,7 @@ export default {
                 this.foreignObject = null;
             }
         },
-        expendToNode(targetNodeId) {
+        expendToNode(targetNodeId, eventList = []) {
             const sourceData = this.treeDataFactory.objById[targetNodeId];
             sourceData.track.forEach((id, index) => {
                 if (id != targetNodeId) {
@@ -1025,6 +1030,41 @@ export default {
                     this.drawView();
                 }
             });
+            eventList = this.formatToArray(eventList);
+            // 触发指定事件
+            if (eventList.length) {
+                let node = this.treeLayoutData
+                    .descendants()
+                    .find((item) => item.data[this.symbolKey] == sourceData[this.symbolKey]);
+
+                let nodeEl = this.svg.select(`#${this.getNodeId(sourceData[this.symbolKey])}`);
+                eventList.forEach((event) => {
+                    const _ = {
+                        preventDefault() {}
+                    };
+                    // this.nodeListener[event]?.(null, node);
+                    if (event == 'clickFetchChildren') {
+                        this.onClickFetchChildren(sourceData);
+                        return;
+                    }
+                    if (event == 'click') {
+                        this.onNodeClick(node);
+                        this.nodeListener['click']?.(_, node, nodeEl, this.svg);
+                        return;
+                    }
+                    if (event == 'mouseover') {
+                        this.onNodeMouseOver(node);
+                        this.nodeListener['mouseover']?.(_, node, nodeEl, this.svg);
+                        return;
+                    }
+                    if (event == 'mouseover') {
+                        this.onNodeMouseOut(node);
+                        this.nodeListener['mouseout']?.(_, node, nodeEl, this.svg);
+                        return;
+                    }
+                    this.nodeListener[event]?.(_, node, nodeEl, this.svg);
+                });
+            }
         }
     }
 };

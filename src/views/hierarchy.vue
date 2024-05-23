@@ -7,7 +7,7 @@
                 <button @click="$refs.hierarchy.zoom(0.5)">缩小</button>
                 <button @click="$refs.hierarchy.pauseZoom()">暂停缩放</button>
                 <button @click="$refs.hierarchy.continueZoom()">恢复缩放</button>
-                <button @click="$refs.hierarchy.expendToNode('qyfxsbpggl')">展示到指定节点</button>
+                <button @click="$refs.hierarchy.expendToNode('qyfxsbpggl', ['click','contextmenu'])">展示到指定节点</button>
             </div>
             <div style="margin-top: 10px">
                 <input type="radio" id="h" value="h" v-model="mode" />
@@ -153,7 +153,6 @@ export default {
                             });
                         },
                         click: (e, d, el, svg) => {
-                            console.log('click');
                             if (typeof d.data._isexpend == 'boolean') return;
                             svg.selectAll('.active-node').classed('active-node', false);
                             el.classed('active-node', true);
