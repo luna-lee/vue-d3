@@ -1062,6 +1062,12 @@ export default {
                         this.nodeListener['mouseout']?.(_, node, nodeEl, this.svg);
                         return;
                     }
+                    if (event == 'move') {
+                        this.moveToCenter({
+                            ...this.nodeToCenterXY(node),
+                            d: this.duration
+                        });
+                    }
                     this.nodeListener[event]?.(_, node, nodeEl, this.svg);
                 });
             }
