@@ -6,7 +6,8 @@
     "serve": "vue-cli-service serve",
     "build": "vue-cli-service build",
     "lint": "vue-cli-service lint",
-    "build:package": "vue-cli-service build --target lib src/components/moon-hierarchy/index.vue  --name moon-hierarchy   --dest packages/dist "
+    "build:package": "vue-cli-service build --target lib src/components/moon-hierarchy/index.vue  --name moon-hierarchy   --dest packages/dist ",
+    "publish": "cd ./packages && npm publish"
   },
   "dependencies": {
     "@kangc/v-md-editor": "^1.7.12",
