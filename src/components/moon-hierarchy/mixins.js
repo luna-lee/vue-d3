@@ -464,20 +464,20 @@ export default {
         addShapEexpendFold(node, qt) {
             if (this.expendShape != this.foldShape) {
                 if (this.expendShape) {
-                    node.select(this.expendShape).on('click', (e, d) => {
+                    node.select(this.expendShape).on('click.customEvent', (e, d) => {
                         e.stopPropagation();
                         this.onNodeExpendOrFold(qt || d, true);
                     });
                 }
                 if (this.foldShape) {
-                    node.select(this.foldShape).on('click', (e, d) => {
+                    node.select(this.foldShape).on('click.customEvent', (e, d) => {
                         e.stopPropagation();
                         this.onNodeExpendOrFold(qt || d, false);
                     });
                 }
             } else {
                 if (this.expendShape) {
-                    node.select(this.expendShape).on('click', (e, d) => {
+                    node.select(this.expendShape).on('click.customEvent', (e, d) => {
                         e.stopPropagation();
                         const id = qt ? qt.data[this.symbolKey] : d.data[this.symbolKey];
                         const sourceData = this.treeDataFactory.objById[id];

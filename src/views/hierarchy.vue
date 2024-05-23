@@ -42,6 +42,8 @@
             :config="config"
             :width="width"
             :height="height"
+            expendShape=".moon-hierarchy-plus"
+            foldShape=".moon-hierarchy-plus"
             @draw-done="onDrawDone"
         >
             <div>
@@ -91,8 +93,13 @@ export default {
             currentNode: {},
             treeOptions: { id: 'code', pId: 'pcode' },
             width: 0,
-            height: 0,
-            config: {
+            height: 0
+        };
+    },
+    watch: {},
+    computed: {
+        config() {
+            return {
                 node: {
                     on: {
                         clickFetchChildren: (data, node, svg) => {
@@ -146,6 +153,7 @@ export default {
                             });
                         },
                         click: (e, d, el, svg) => {
+                            console.log('click');
                             if (typeof d.data._isexpend == 'boolean') return;
                             svg.selectAll('.active-node').classed('active-node', false);
                             el.classed('active-node', true);
@@ -158,30 +166,11 @@ export default {
                             this.$refs.hierarchy.showCustomView(e, d);
                         }
                     },
-                    exShaps: [
-                        {
-                            name: 'text',
-                            attrs: {
-                                fill: (d) => {
-                                    if (d.data.children?.length) return 'red';
-                                },
-                                'font-size': 19,
-                                transform: (d) => {
-                                    return d.data._sign == 1
-                                        ? `translate(${d.data._nodeConfig.nodeWidth},${d.data._nodeConfig.nodeHeight / 2 + 5})`
-                                        : `translate(-20,${d.data._nodeConfig.nodeHeight / 2 + 5})`;
-                                }
-                            },
-                            compose: {
-                                text(d) {
-                                    if (typeof d.data._isexpend == 'boolean') {
-                                        return d.data._isexpend ? '🤩' : '🤓';
-                                    }
-                                    return d.data?.children?.length ? '😝' : '😃';
-                                }
-                            }
-                        }
-                    ]
+                    exShaps: this.mode == 'h' ? this.exShaps() : [],
+                    plus: {
+                        artts: {},
+                        show: this.mode != 'h'
+                    }
                 },
                 customView: {
                     width: 120,
@@ -191,11 +180,9 @@ export default {
                 arrow: {
                     // show: false
                 }
-            }
-        };
+            };
+        }
     },
-    watch: {},
-    computed: {},
     methods: {
         setWidthHeight() {
             this.width = (window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth) - 10;
@@ -242,6 +229,119 @@ export default {
         },
         onUpdate() {
             this.$refs.hierarchy.updateNodeByData({ ...this.currentNode, name: 'hello', children: [] });
+        },
+        exShaps() {
+            let plusCircleWidth = 15;
+            function isNonEmptyArray(arr) {
+                return arr && arr.length;
+            }
+            return [
+                {
+                    name: 'text',
+                    attrs: {
+                        fill: (d) => {
+                            if (d.data.children?.length) return 'red';
+                        },
+                        'font-size': 19,
+                        transform: (d) => {
+                            return d.data._sign == 1
+                                ? `translate(${d.data._nodeConfig.nodeWidth},${d.data._nodeConfig.nodeHeight / 2 + 5})`
+                                : `translate(-20,${d.data._nodeConfig.nodeHeight / 2 + 5})`;
+                        }
+                    },
+                    compose: {
+                        text(d) {
+                            if (typeof d.data._isexpend == 'boolean') {
+                                return d.data._isexpend ? '🤩' : '🤓';
+                            }
+                            return d.data?.children?.length ? '😝' : '😃';
+                        }
+                    }
+                },
+
+                {
+                    name: 'g',
+                    on: {
+                        click: (e) => {
+                            console.log('plus click');
+
+                            this.$refs.hierarchy.hiddenCustomView();
+                        }
+                    },
+                    attrs: {
+                        class: 'moon-hierarchy-plus',
+                        display: (d) => {
+                            if (
+                                (!isNonEmptyArray(d.data.children) && !isNonEmptyArray(d.data._children)) ||
+                                d.data.track.length == 1
+                            ) {
+                                return 'none';
+                            }
+                        },
+                        transform: (d) =>
+                            `translate(${
+                                d.data._sign == 1 ? d.data._nodeConfig.nodeWidth + 2 + plusCircleWidth / 2 : -plusCircleWidth
+                            },${d.data._nodeConfig.nodeHeight / 2 + 1})`
+                    },
+                    children: [
+                        {
+                            name: 'circle',
+                            attrs: {
+                                class: 'moon-hierarchy-plus-circle',
+                                r: plusCircleWidth / 2
+                            }
+                        },
+                        {
+                            name: 'line',
+                            attrs: {
+                                x1: -plusCircleWidth / 4,
+                                y1: '0',
+                                x2: plusCircleWidth / 4,
+                                y2: '0'
+                            }
+                        },
+                        /*  {
+                            name: 'text',
+                            attrs: {
+                                display: (d) => {
+                                    if (d.data?.children?.length) {
+                                        return 'none';
+                                    }
+                                },
+                                x: -4,
+                                y: 5
+                            },
+                            compose: {
+                                text(d) {
+                                    return 22 + d.data?._children?.length;
+                                }
+                            }
+                        }, */
+                        {
+                            name: 'line',
+                            attrs: {
+                                display: (d) => {
+                                    if (d.data?.children?.length) {
+                                        return 'none';
+                                    }
+                                },
+                                x1: '0',
+                                y1: -plusCircleWidth / 4,
+                                x2: '0',
+                                y2: plusCircleWidth / 4
+                            }
+                        },
+                        {
+                            name: 'circle',
+                            attrs: {
+                                r: plusCircleWidth / 2,
+                                'fill-opacity': 0,
+                                'stroke-width': '0.5'
+                            }
+                        }
+                    ]
+                }
+            ];
         }
     }
 };
