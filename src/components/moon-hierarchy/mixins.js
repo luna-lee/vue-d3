@@ -179,7 +179,7 @@ export default {
                 () => {
                     if (this.svg) {
                         this.svg.attr('width', this.width).attr('height', this.height);
-                        this.moveToCenter();
+                        if (this.treeData?.length && this.treeLayout) this.moveToCenter();
                     } else this.createSvg();
                 },
                 {
