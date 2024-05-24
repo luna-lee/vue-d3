@@ -67,11 +67,11 @@
 
 | 名称               | 说明                                                         | 类型                                                         |
 | ------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| clickFetchChildren | 点击后异步加载子节点。父节点上需要有\_hasChildren 标记 ,返回一个数组，可以是层级结构的数据。data:当前节点源数据信息；el:当前节点对应的 d3 元素对象；svg:画布元素 | (data:treeData,el:d3Element,svg:d3Element)=>object[]\|object |
-| click              | 鼠标事件,禁止冒泡;                                           | (e:MouseEvent,d:d3LayoutData,svg:d3Element)=>object[]        |
-| mouseover          | 鼠标事件                                                     | (e:MouseEvent,d:d3LayoutData,svg:d3Element)=>object[]        |
-| mouseout           | 鼠标事件                                                     | (e:MouseEvent,d:d3LayoutData,svg:d3Element)=>object[]        |
-| 其他事件           | 其他事件                                                     | (e:MouseEvent,d:d3LayoutData,svg:d3Element)=>object[]        |
+| clickFetchChildren | 点击后异步加载子节点。父节点上需要有\_hasChildren 标记 ,返回一个数组，可以是层级结构的数据。data:当前节点源数据信息；el:当前节点对应的 d3 元素对象；svg:画布元素 | (data:treeData,el:selection,svg:d3Selection)=>object[]\|object |
+| click              | 鼠标事件,禁止冒泡;                                           | (e:MouseEvent,d:d3Node,svg:d3Selection)=>object[]            |
+| mouseover          | 鼠标事件                                                     | (e:MouseEvent,d:d3Node,svg:d3Selection)=>object[]            |
+| mouseout           | 鼠标事件                                                     | (e:MouseEvent,d:d3Node,svg:d3Selection)=>object[]            |
+| 其他事件           | 其他事件                                                     | (e:MouseEvent,d:d3Node,svg:d3Selection)=>object[]            |
 
 ### 
 
@@ -82,7 +82,7 @@
   - <!-- 数据类型 -->
 
   - ```javascript
-    type=[number,number,number,number]|number|(d:d3Layout)=>{return [number,number,number,number]}
+    type=[number,number,number,number]|number|(d:d3Node)=>{return [number,number,number,number]}
     ```
 
 
@@ -285,9 +285,9 @@ exShaps = [
 
 ### Events
 
-| 名称      | 说明                                              | 参数                                |
-| --------- | ------------------------------------------------- | ----------------------------------- |
-| draw-done | 画布渲染完成后事件,返回当前画布节点与内容区域节点 | {svg:d3Element,container:d3Element} |
+| 名称      | 说明                                              | 参数                                    |
+| --------- | ------------------------------------------------- | --------------------------------------- |
+| draw-done | 画布渲染完成后事件,返回当前画布节点与内容区域节点 | {svg:d3Selection,container:d3Selection} |
 
 ### Slot
 
@@ -301,12 +301,12 @@ exShaps = [
 
 | 名称        | 说明                                                         | 类型                                           |
 | ----------- | ------------------------------------------------------------ | ---------------------------------------------- |
-| getNodeById | 依据数据中唯一标识 id，对应 treeOptions 中的 id， 获取对应的数据，以及元素对象 | (id:string)=>({ data: object, el: d3Element }) |
-| getAllNode | 获取所有非展开收起的节点，对应的数据，以及元素对象 | (id:string)=>({ data: Object, el: d3Element }[]) |
+| getNodeById | 依据数据中唯一标识 id，对应 treeOptions 中的 id， 获取对应的数据，以及元素对象 | (id:string)=>({ data: d3Node, el: d3Selection }) |
+| getAllNode | 获取所有非展开收起的节点，对应的数据，以及元素对象 | (id:string)=>({ data: d3Node, el: d3Selection }[]) |
 | moveToCenter | 移动到中点 | ()=>void |
 | zoom | 缩放画布，  大于 1 的为放大，小于 1 大于 0 的为缩小。负数无效 | (scale:number)=>void |
-| addNode | 在targetId对应目标节点上新增子节点 ,childrenNode 是一个扁平树数据也可以是单个对象数据。 \_sign 当目标节点为根节点且为 bf 布局时，用于指定添加的方位。会修改treeData数据 | (targetId,childrenNode:object[]|
-| updateNodeByData | 更新节点对应业务数据。但不能更改组件数据，如id，pId，children，"_"开头的属性。会修改treeData数据 | (dataList:object\|object[])=>void |
+| addNode | 在targetId对应目标节点上新增子节点 ,childrenNode 是一个扁平树数据也可以是单个对象数据。 \_sign 当目标节点为根节点且为 bf 布局时，用于指定添加的方位。会修改treeData数据 | (targetId,childrenNode:treeItem\|treeItem[],\_sign)=>void |
+| updateNodeByData | 更新节点对应业务数据。但不能更改组件数据，如id，pId，children，"_"开头的属性。会修改treeData数据 | (dataList:treeItem\|treeItem[])=>void |
 | removeNodeById | 依据节点 id，移除该节点以及其所有子节点。会修改treeData数据 | (id:string\|string[])=>void |
 | pauseZoom | 暂停缩放功能 | ()=>void |
 | continueZoom | 启动缩放功能 | ()=>void |

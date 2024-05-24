@@ -263,12 +263,12 @@ export default {
             } else {
                 // 收起
                 exChildrenIds = parent._exChildren.filter((v) => v._sign == sourceData._sign).map((v) => v[this.symbolKey]);
-                exChildrenNode = this.treeLayoutData.descendants().filter((n) => exChildrenIds.includes(n.data[symbolKey]));
+                exChildrenNode = this.hierarchyLayoutData.descendants().filter((n) => exChildrenIds.includes(n.data[symbolKey]));
                 parent.children = parent.children.filter((v) => !exChildrenIds.includes(v[this.symbolKey]));
             }
             this.drawView();
             // 找到重新计算后的node。
-            const afterCalcuNode = this.treeLayoutData
+            const afterCalcuNode = this.hierarchyLayoutData
                 .descendants()
                 .find((n) => n.data[symbolKey] == this.lastClickNode.data[symbolKey]);
             // 收起
@@ -358,7 +358,7 @@ export default {
             if (node.data._sign == 1) {
                 x = node.y + node.data._nodeConfig.nodeWidth / 2;
             } else {
-                x = -node.y - node.data._nodeConfig.nodeWidth / 2 + this.treeLayoutData.data._nodeConfig.nodeWidth;
+                x = -node.y - node.data._nodeConfig.nodeWidth / 2 + this.hierarchyLayoutData.data._nodeConfig.nodeWidth;
             }
             return {
                 x,
@@ -429,8 +429,8 @@ export default {
         },
 
         getTranslateOffset(d) {
-            if (d.data._sign == -1 && d.data[this.symbolKey] != this.treeLayoutData.data[this.symbolKey])
-                return this.treeLayoutData.data._nodeConfig.nodeWidth;
+            if (d.data._sign == -1 && d.data[this.symbolKey] != this.hierarchyLayoutData.data[this.symbolKey])
+                return this.hierarchyLayoutData.data._nodeConfig.nodeWidth;
             return 0;
         },
 
@@ -460,10 +460,7 @@ export default {
                         'transform-origin',
                         (d) => `${x(d) + this.defsNodeConfig.loadingSize / 2} ${y(d) + this.defsNodeConfig.loadingSize / 2}`
                     );
-            } else {
-                let use = this.svg.select(`#${nodeId}`).select('use');
-                use.remove();
-            }
+            } else this.svg.select(`#${nodeId}`).select('use').remove();
         },
         drawCustomView(e, d, width, height, priority, duration) {
             // 不指width, height时使用全局配置

@@ -296,7 +296,7 @@ export default {
         },
 
         getTranslateOffset(d) {
-            if (d.data._sign == -1 && d.data[this.symbolKey] != this.treeLayoutData.data[this.symbolKey])
+            if (d.data._sign == -1 && d.data[this.symbolKey] != this.hierarchyLayoutData.data[this.symbolKey])
                 return this.nodeConfig.nodeHeight;
             return 0;
         },
@@ -323,8 +323,7 @@ export default {
                     );
             } else {
                 delete source._loading;
-                let use = this.svg.select(`#${nodeId}`).select('use');
-                use.remove();
+                this.svg.select(`#${nodeId}`).select('use').remove();
             }
         },
         // 构建无极分层

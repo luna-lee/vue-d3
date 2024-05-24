@@ -68,7 +68,7 @@ export default {
             svg: null,
             zoom: null,
             container: null,
-            treeLayoutData: null,
+            hierarchyLayoutData: null,
             lastClickNode: null,
             nodesContainer: null,
             linksContainer: null,
@@ -245,7 +245,7 @@ export default {
         },
         setLayoutData() {
             let root = this.treeDataFactory.treeData[0];
-            this.treeLayoutData = this.treeLayout(d3.hierarchy(root));
+            this.hierarchyLayoutData = this.treeLayout(d3.hierarchy(root));
             // 蝴蝶模型，左边右边单独计算
             if (this.layout == 'bf' && root.children) {
                 let positive = root.children.filter((v) => v._sign == 1);
@@ -253,12 +253,12 @@ export default {
                 let _positive = this.treeLayout(d3.hierarchy({ ...root, children: positive }));
                 let _negative = this.treeLayout(d3.hierarchy({ ...root, children: negative }));
 
-                this.treeLayoutData.children = [...(_positive?.children || []), ...(_negative?.children || [])];
+                this.hierarchyLayoutData.children = [...(_positive?.children || []), ...(_negative?.children || [])];
             }
         },
-        setNodeClassAttr(nodes) {
+        setNodeClassAttr(selectionNode) {
             const customNodeAttrs = this.config.node?.attrs || {};
-            nodes.attr('class', function (d) {
+            selectionNode.attr('class', function (d) {
                 const currentClass = d3.select(this).attr('class') || '';
                 const classList = currentClass.split(' ');
                 classList.push('moon-hierarchy-node');
@@ -277,7 +277,7 @@ export default {
                 return [...new Set(classList)].join(' ');
             });
         },
-        setNodeDefaultAttr(nodes) {
+        setNodeDefaultAttr(selectionNode) {
             const getNodeId = this.getNodeId;
             const symbolKey = this.symbolKey;
             const lastClickNode = this.lastClickNode;
@@ -295,9 +295,9 @@ export default {
             // 设置节点属性
             Object.keys(nodeDefaultAttrs).reduce((_, attr) => {
                 return _.attr(attr, nodeDefaultAttrs[attr]);
-            }, nodes);
+            }, selectionNode);
 
-            this.setNodeClassAttr(nodes);
+            this.setNodeClassAttr(selectionNode);
         },
         addNode(nodeList) {
             if (!this.nodesContainer)
@@ -306,7 +306,7 @@ export default {
                     .attr('stroke-linejoin', 'round')
                     .attr('stroke-width', 3)
                     .attr('class', 'moon-hierarchy-nodes');
-            const nodes = this.nodesContainer
+            const selectionNode = this.nodesContainer
                 .selectAll()
                 .data(nodeList)
                 .join('g')
@@ -330,17 +330,17 @@ export default {
                     this.nodeListener['mouseout']?.(_, d, node, this.svg);
                 });
             //自定义属性，除了id与transform
-            this.setNodeDefaultAttr(nodes);
-            this.addListener(nodes, this.nodeListener, this.exceptListener);
-            nodes
+            this.setNodeDefaultAttr(selectionNode);
+            this.addListener(selectionNode, this.nodeListener, this.exceptListener);
+            selectionNode
                 .transition()
                 .duration(this.duration)
                 .attr('transform', (d) => {
                     // 结束位置
                     return this.onNodeExpendTranslate(d);
                 });
-            this.iteratorAddNode(nodes, this.nodeConfig.shaps);
-            this.addShapEexpendFold(nodes);
+            this.iteratorAddNode(selectionNode, this.nodeConfig.shaps);
+            this.addShapEexpendFold(selectionNode);
         },
         updateNodeByData(dataList) {
             dataList = this.formatToArray(dataList);
@@ -369,42 +369,43 @@ export default {
         },
         updateNode(nodeList) {
             for (let i = 0; i < nodeList.length; i++) {
-                let item = nodeList[i];
-                const id = this.getNodeId(item.data[this.symbolKey]);
-                const node = this.svg.select(`#${id}`);
-                this.addListener(node, this.nodeListener, this.exceptListener, item);
-                node.on('click', (_) => {
-                    _.stopPropagation();
-                    this.onNodeClick(item);
-                    this.nodeListener['click']?.(_, item, node, this.svg);
-                })
+                let node = nodeList[i];
+                const id = this.getNodeId(node.data[this.symbolKey]);
+                const selectionNode = this.svg.select(`#${id}`);
+                this.addListener(selectionNode, this.nodeListener, this.exceptListener, node);
+                selectionNode
+                    .on('click', (_) => {
+                        _.stopPropagation();
+                        this.onNodeClick(node);
+                        this.nodeListener['click']?.(_, node, selectionNode, this.svg);
+                    })
                     .on('mouseover', (_) => {
-                        this.onNodeMouseOver(item);
-                        this.nodeListener['mouseover']?.(_, item, node, this.svg);
+                        this.onNodeMouseOver(node);
+                        this.nodeListener['mouseover']?.(_, node, selectionNode, this.svg);
                     })
                     .on('mouseout', (_) => {
-                        this.onNodeMouseOut(item);
-                        this.nodeListener['mouseout']?.(_, item, node, this.svg);
+                        this.onNodeMouseOut(node);
+                        this.nodeListener['mouseout']?.(_, node, selectionNode, this.svg);
                     })
                     .transition()
                     .duration(this.duration)
                     .attr('transform', () => {
                         // 结束位置
-                        return this.onNodeExpendTranslate(item);
+                        return this.onNodeExpendTranslate(node);
                     });
                 // 移除所有形状
-                node.selectAll('*').remove();
-                this.setNodeClassAttr(node);
+                selectionNode.selectAll('*').remove();
+                this.setNodeClassAttr(selectionNode);
                 // 重新添加形状
-                this.iteratorAddNode(node, this.nodeConfig.shaps);
-                this.addShapEexpendFold(node, item);
+                this.iteratorAddNode(selectionNode, this.nodeConfig.shaps);
+                this.addShapEexpendFold(selectionNode, node);
             }
         },
         removeNode(targetNodeId, redraw = true, canRemoveExpendNode = false) {
-            let root = this.treeDataFactory.treeData[0];
             if (!targetNodeId) throw `moon-hierarchy组件：请传入目标节点数据中${this.symbolKey}的值`;
 
-            if (targetNodeId == root[this.symbolKey]) {
+            let rootId = this.hierarchyLayoutData.data[this.symbolKey];
+            if (targetNodeId == rootId) {
                 throw `moon-hierarchy组件：根节点不能删除`;
             }
             const sourceData = this.treeDataFactory.objById[targetNodeId];
@@ -415,25 +416,23 @@ export default {
             if (typeof sourceData._isexpend == 'boolean' && !canRemoveExpendNode) {
                 throw `moon-hierarchy组件：展开/收起节点不能手动删除！`;
             }
-            const node = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
+            const selectionNode = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
 
             // 移除子项
             sourceData.trigger.forEach((subId) => {
-                const subNode = this.svg.select(`#${this.getNodeId(subId)}`);
-                subNode.remove();
+                this.svg.select(`#${this.getNodeId(subId)}`).remove();
             });
             // 移除当前节点及其子节点的相关link
-            const links = this.treeLayoutData.links();
+            const links = this.hierarchyLayoutData.links();
             for (let i = 0; i < links.length; i++) {
                 let item = links[i];
                 let idList = [...sourceData.trigger, targetNodeId];
                 if (idList.includes(item.source.data[this.symbolKey]) || idList.includes(item.target.data[this.symbolKey])) {
                     const id = this.getLinkId(item.source.data[this.symbolKey], item.target.data[this.symbolKey]);
-                    const linkNode = this.svg.select(`#${id}`);
-                    linkNode.remove();
+                    this.svg.select(`#${id}`).remove();
                 }
             }
-            node.remove();
+            selectionNode.remove();
 
             // 处理父节点
             let parentNode = this.treeDataFactory.objById[sourceData[this.inner_treeOptions.pId]];
@@ -515,23 +514,23 @@ export default {
             this.drawView();
         },
 
-        addShapEexpendFold(node, qt) {
+        addShapEexpendFold(selectionNode, qt) {
             if (this.expendShape != this.foldShape) {
                 if (this.expendShape) {
-                    node.select(this.expendShape).on('click.customEvent', (e, d) => {
+                    selectionNode.select(this.expendShape).on('click.customEvent', (e, d) => {
                         e.stopPropagation();
                         this.onNodeExpendOrFold(qt || d, true);
                     });
                 }
                 if (this.foldShape) {
-                    node.select(this.foldShape).on('click.customEvent', (e, d) => {
+                    selectionNode.select(this.foldShape).on('click.customEvent', (e, d) => {
                         e.stopPropagation();
                         this.onNodeExpendOrFold(qt || d, false);
                     });
                 }
             } else {
                 if (this.expendShape) {
-                    node.select(this.expendShape).on('click.customEvent', (e, d) => {
+                    selectionNode.select(this.expendShape).on('click.customEvent', (e, d) => {
                         e.stopPropagation();
                         const id = qt ? qt.data[this.symbolKey] : d.data[this.symbolKey];
                         const sourceData = this.treeDataFactory.objById[id];
@@ -540,30 +539,30 @@ export default {
                 }
             }
         },
-        addListener(node, listener = {}, except = [], qd) {
+        addListener(selectionNode, listener = {}, except = [], qd) {
             Object.keys(listener).forEach((key) => {
                 if (!except.includes(key)) {
-                    node.on(key, (e, d) => {
+                    let svg = this.svg;
+                    // selectionNode可能是一个数组
+                    selectionNode.on(key, function (e, d) {
                         if (qd) d = qd;
                         // 展开收起按钮节点不绑定自定义节点事件
                         if (typeof d.data._isexpend == 'boolean') return;
-                        // node可能时一个序列，重新获取下对象
-                        const id = this.getNodeId(d.data[this.symbolKey]);
-                        const _node = this.svg.select(`#${id}`);
-                        listener[key](e, d, _node, this.svg);
+                        // 此处的this即为当前的selection对象
+                        listener[key](e, d, this, svg);
                     });
                 }
             });
         },
         addOrUpdateNode() {
-            const nodeList = this.treeLayoutData.descendants();
+            const nodeList = this.hierarchyLayoutData.descendants();
             let addList = [];
             let updateList = [];
             for (let i = 0; i < nodeList.length; i++) {
                 let item = nodeList[i];
                 const id = this.getNodeId(item.data[this.symbolKey]);
-                const node = this.svg.select(`#${id}`);
-                if (node.node()) {
+                const selectionNode = this.svg.select(`#${id}`);
+                if (selectionNode.node()) {
                     updateList.push(item);
                 } else {
                     addList.push(item);
@@ -584,23 +583,24 @@ export default {
                 this.onLimitNodeExpendOrFold && this.onLimitNodeExpendOrFold(sourceData);
             }
         },
-        async onNodeExpendOrFold(d, expend = false) {
+        async onNodeExpendOrFold(node, expend = false) {
             if (typeof this.canExpendFold == 'boolean' && !this.canExpendFold) return;
             if (typeof this.canExpendFold == 'function' && !this.canExpendFold(sourceData)) return;
+
             const symbolKey = this.symbolKey;
-            this.lastClickNode = d;
+            this.lastClickNode = node;
             const sourceData = this.treeDataFactory.objById[this.lastClickNode.data[symbolKey]];
 
-            const node = this.svg.select(`#${this.getNodeId(d.data[this.symbolKey])}`);
+            const selectionNode = this.svg.select(`#${this.getNodeId(node.data[this.symbolKey])}`);
             if (expend) {
                 // 展开
                 if (isNonEmptyArray(sourceData._children)) {
-                    node.classed('moon-hierarchy-node-expend', true);
+                    selectionNode.classed('moon-hierarchy-node-expend', true);
                     sourceData.children = sourceData._children;
                     sourceData._children = undefined;
                 } else {
                     if (sourceData._hasChildren) {
-                        node.classed('moon-hierarchy-node-expend', true);
+                        selectionNode.classed('moon-hierarchy-node-expend', true);
                         await this.onClickFetchChildren(sourceData);
                         // 动态新增的节点，从新计算限制值
                         this.setLimtNode && this.setLimtNode();
@@ -609,7 +609,7 @@ export default {
             }
             // 收起
             else if (isNonEmptyArray(sourceData.children)) {
-                node.classed('moon-hierarchy-node-expend', false);
+                selectionNode.classed('moon-hierarchy-node-expend', false);
                 sourceData._children = sourceData.children;
                 sourceData.children = undefined;
             }
@@ -619,9 +619,7 @@ export default {
             // _children有值时为收起
             let isFold = isNonEmptyArray(sourceData._children);
             // 找到重新计算后的node。
-            const afterCalcuNode = this.treeLayoutData
-                .descendants()
-                .find((n) => n.data[symbolKey] == this.lastClickNode.data[symbolKey]);
+            const afterCalcuNode = this.hierarchyLayoutData.find((n) => n.data[symbolKey] == this.lastClickNode.data[symbolKey]);
             // 收起
             if (isFold) {
                 this.foldLinksAndNodes(this.lastClickNode, afterCalcuNode);
@@ -631,14 +629,14 @@ export default {
                 d: this.duration
             });
         },
-        onNodeMouseOver(d) {
-            d.links().forEach((link) => {
+        onNodeMouseOver(node) {
+            node.links().forEach((link) => {
                 const id = this.getLinkId(link.source.data[this.symbolKey], link.target.data[this.symbolKey]);
                 this.svg.select(`#${id}`).classed('moon-hierarchy-node-hover-link', true);
             });
         },
-        onNodeMouseOut(d) {
-            d.links().forEach((link) => {
+        onNodeMouseOut(node) {
+            node.links().forEach((link) => {
                 const id = this.getLinkId(link.source.data[this.symbolKey], link.target.data[this.symbolKey]);
                 let line = this.svg.select(`#${id}`);
                 // 获取虚线的总长度
@@ -666,7 +664,7 @@ export default {
             } else _sign = sourceData._sign;
 
             // 获取当前布局节点，
-            let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == targetNodeId);
+            let node = this.hierarchyLayoutData.descendants().find((item) => item.data[this.symbolKey] == targetNodeId);
             // 设置新增节点动画的起点
             this.lastClickNode = node;
             // 不是数组时构造一个数组
@@ -781,14 +779,14 @@ export default {
             }
         },
         addOrUpdateLinks() {
-            const links = this.treeLayoutData.links();
+            const links = this.hierarchyLayoutData.links();
             let addList = [];
             let updateList = [];
             for (let i = 0; i < links.length; i++) {
                 let item = links[i];
                 const id = this.getLinkId(item.source.data[this.symbolKey], item.target.data[this.symbolKey]);
-                const node = this.svg.select(`#${id}`);
-                if (node.node()) {
+                const selectionNode = this.svg.select(`#${id}`);
+                if (selectionNode.node()) {
                     updateList.push(item);
                 } else {
                     addList.push(item);
@@ -837,18 +835,18 @@ export default {
             const defs = this.svg.append('defs');
             this.iteratorAddNode(defs, this.defsNodeConfig.nodeList);
         },
-        iteratorAddNode(parrentNodes, nodeConfigList) {
+        iteratorAddNode(selectionNode, nodeConfigList) {
             nodeConfigList.forEach((shap) => {
-                const node = parrentNodes.append(shap.name);
-                this.setAttrByOpt(node, shap.attrs);
-                this.setComposeOpt(node, shap.compose);
-                this.addListener(node, shap.on);
-                if (shap.children) this.iteratorAddNode(node, shap.children);
+                const selectionShap = selectionNode.append(shap.name);
+                this.setAttrByOpt(selectionShap, shap.attrs);
+                this.setComposeOpt(selectionShap, shap.compose);
+                this.addListener(selectionShap, shap.on);
+                if (shap.children) this.iteratorAddNode(selectionShap, shap.children);
             });
         },
         moveToCenter(opt) {
             if (!opt) {
-                let rootNode = this.treeLayoutData;
+                let rootNode = this.hierarchyLayoutData;
                 opt = {
                     ...this.nodeToCenterXY(rootNode),
                     d: this.duration
@@ -897,17 +895,17 @@ export default {
                 this.moveToCenter();
             } else throw '缩放参数必须数字';
         },
-        setAttrByOpt(node, opt = {}) {
+        setAttrByOpt(selectionNode, opt = {}) {
             Object.keys(opt).map((key) => {
-                node.attr(key, opt[key]);
+                selectionNode.attr(key, opt[key]);
             });
         },
-        setComposeOpt(node, opt = {}) {
+        setComposeOpt(selectionNode, opt = {}) {
             Object.keys(opt).reduce((n, key) => {
                 if (Array.isArray(opt[key])) n[key](...opt[key]);
                 else n[key](opt[key]);
                 return n;
-            }, node);
+            }, selectionNode);
         },
         getNodeById(id) {
             return { data: this.treeDataFactory.objById[id], el: this.svg.select(`#${this.getNodeId(id)}`) };
@@ -1001,10 +999,10 @@ export default {
             if (this.foreignObject && this.drawCustomViewLastConfig.d) {
                 let item = this.drawCustomViewLastConfig.d;
                 // 判断目标节点是否被移除
-                const nodeD3 = this.svg.select(`#${this.getNodeId(item.data[this.symbolKey])}`);
-                if (nodeD3.node()) {
+                const selectionNode = this.svg.select(`#${this.getNodeId(item.data[this.symbolKey])}`);
+                if (selectionNode.node()) {
                     let id = this.drawCustomViewLastConfig.d.data[this.symbolKey];
-                    let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
+                    let node = this.hierarchyLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
                     let { e, width, height, priority } = this.drawCustomViewLastConfig;
                     if (node) {
                         this.drawCustomView(e, node, width, height, priority);
@@ -1032,15 +1030,15 @@ export default {
             }
             sourceData.track.forEach((id, index) => {
                 if (id != targetNodeId) {
-                    let node = this.treeLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
+                    let node = this.hierarchyLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
                     // 设置动画起始节点
                     if (isNonEmptyArray(node.data._children)) {
                         if (!this.lastClickNode) this.lastClickNode = node;
                     }
-                    let el = this.svg.select(`#${this.getNodeId(id)}`);
+                    let selectionNode = this.svg.select(`#${this.getNodeId(id)}`);
                     // 展开节点
                     if (isNonEmptyArray(node.data._children)) {
-                        el.classed('moon-hierarchy-node-expend', true);
+                        selectionNode.classed('moon-hierarchy-node-expend', true);
                         node.data.children = node.data._children;
                         node.data._children = undefined;
                     }
@@ -1072,11 +1070,11 @@ export default {
             eventList = this.formatToArray(eventList);
             // 触发指定事件
             if (eventList.length) {
-                let node = this.treeLayoutData
+                let node = this.hierarchyLayoutData
                     .descendants()
                     .find((item) => item.data[this.symbolKey] == sourceData[this.symbolKey]);
 
-                let nodeEl = this.svg.select(`#${this.getNodeId(sourceData[this.symbolKey])}`);
+                let selectionNode = this.svg.select(`#${this.getNodeId(sourceData[this.symbolKey])}`);
                 eventList.forEach((event) => {
                     const _ = {
                         preventDefault() {}
@@ -1088,17 +1086,17 @@ export default {
                     }
                     if (event == 'click') {
                         this.onNodeClick(node);
-                        this.nodeListener['click']?.(_, node, nodeEl, this.svg);
+                        this.nodeListener['click']?.(_, node, selectionNode, this.svg);
                         return;
                     }
                     if (event == 'mouseover') {
                         this.onNodeMouseOver(node);
-                        this.nodeListener['mouseover']?.(_, node, nodeEl, this.svg);
+                        this.nodeListener['mouseover']?.(_, node, selectionNode, this.svg);
                         return;
                     }
                     if (event == 'mouseover') {
                         this.onNodeMouseOut(node);
-                        this.nodeListener['mouseout']?.(_, node, nodeEl, this.svg);
+                        this.nodeListener['mouseout']?.(_, node, selectionNode, this.svg);
                         return;
                     }
                     if (event == 'move') {
@@ -1107,7 +1105,7 @@ export default {
                             d: this.duration
                         });
                     }
-                    this.nodeListener[event]?.(_, node, nodeEl, this.svg);
+                    this.nodeListener[event]?.(_, node, node, this.svg);
                 });
             }
         }

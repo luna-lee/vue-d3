@@ -160,6 +160,7 @@ export default {
                             this.$refs.hierarchy.hiddenCustomView();
                         },
                         contextmenu: (e, d, node, svg) => {
+                            console.log('contextmenu',node);
                             e.preventDefault();
                             this.currentNode = d.data;
                             this.$refs.hierarchy.showCustomView(e, d);
