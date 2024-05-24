@@ -416,15 +416,15 @@ export default {
             if (typeof sourceData._isexpend == 'boolean' && !canRemoveExpendNode) {
                 throw `moon-hierarchy组件：展开/收起节点不能手动删除！`;
             }
-            
-            const node = this.hierarchyLayoutData.find((n) => n.data[this.symbolKey] == targetNodeId);
-            // 移除当前节点及其子节点,以及相关link
-            node.each((n) => {
-                this.svg.select(`#${this.getNodeId(n.data[this.symbolKey])}`).remove();
-                const id = this.getLinkId(n.parent.data[this.symbolKey], n.data[this.symbolKey]);
-                this.svg.select(`#${id}`).remove();
-            });
 
+            let toRemoveId = [...sourceData.trigger, targetNodeId];
+            for (let i = 0; i < toRemoveId.length; i++) {
+                let n = this.treeDataFactory.objById[toRemoveId[i]];
+                this.svg.select(`#${this.getNodeId(n[this.symbolKey])}`).remove();
+                const id = this.getLinkId(n[this.inner_treeOptions.pId], n[this.symbolKey]);
+                this.svg.select(`#${id}`).remove();
+            }
+            
             // 处理父节点
             let parentNode = this.treeDataFactory.objById[sourceData[this.inner_treeOptions.pId]];
             if (parentNode) {
