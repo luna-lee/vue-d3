@@ -265,6 +265,7 @@ export default {
                 if (d.data.track.length == 1) classList.push('moon-hierarchy-node-root');
                 if (typeof d.data._isexpend == 'boolean') classList.push('moon-hierarchy-node-limit-button');
                 if (isNonEmptyArray(d.data.children)) classList.push('moon-hierarchy-node-expend');
+                else arrayRemoveItem(classList, (item) => item == 'moon-hierarchy-node-expend');
                 if (isNonEmptyArray(d.data.children) || isNonEmptyArray(d.data._children) || d.data._hasChildren)
                     classList.push('moon-hierarchy-node-haschildren');
                 let classContent = customNodeAttrs.class;
@@ -582,16 +583,13 @@ export default {
             this.lastClickNode = node;
             const sourceData = this.treeDataFactory.objById[this.lastClickNode.data[symbolKey]];
 
-            const selectionNode = this.svg.select(`#${this.getNodeId(node.data[this.symbolKey])}`);
             if (expend) {
                 // 展开
                 if (isNonEmptyArray(sourceData._children)) {
-                    selectionNode.classed('moon-hierarchy-node-expend', true);
                     sourceData.children = sourceData._children;
                     sourceData._children = undefined;
                 } else {
                     if (sourceData._hasChildren) {
-                        selectionNode.classed('moon-hierarchy-node-expend', true);
                         await this.onClickFetchChildren(sourceData);
                         // 动态新增的节点，从新计算限制值
                         this.setLimtNode && this.setLimtNode();
@@ -600,7 +598,6 @@ export default {
             }
             // 收起
             else if (isNonEmptyArray(sourceData.children)) {
-                selectionNode.classed('moon-hierarchy-node-expend', false);
                 sourceData._children = sourceData.children;
                 sourceData.children = undefined;
             }
@@ -1013,27 +1010,93 @@ export default {
                 this.foreignObject = null;
             }
         },
+        expendAllNode() {
+            this.treeDataFactory.flatData.forEach((item) => {
+                if (item._children) {
+                    item.children = item._children;
+                    item._children = null;
+                }
+                if (typeof item._isexpend == 'boolean' && item._isexpend === false) {
+                    item._isexpend = true;
+                    let p = this.treeDataFactory.objById[item[this.inner_treeOptions.pId]];
+                    let children = p.children || p._children;
+                    // 操作父节点，将_exChildren内容插入到children中
+                    if (p._exChildren?.length) {
+                        let c = p._exChildren.filter((v) => v._sign == item._sign);
+                        children.splice(children.indexOf(item), 0, ...c);
+                    }
+                }
+            });
+            this.drawView();
+        },
+        foldAllNode() {
+            let foldTargetNode = [];
+
+            this.treeDataFactory.flatData.forEach((item) => {
+                let obj = {};
+                if (this.defaultOpenLevel > 0) {
+                    if (item.level >= this.defaultOpenLevel) {
+                        if (item.children) {
+                            item._children = item.children;
+                            item.children = null;
+                        }
+                    }
+                    if (item.level == this.defaultOpenLevel) {
+                        let node = this.hierarchyLayoutData.find((v) => v.data[this.symbolKey] == item[this.symbolKey]);
+                        obj.node = node;
+                    }
+                }
+
+                if (typeof item._isexpend == 'boolean' && item._isexpend) {
+                    item._isexpend = false;
+                    let p = this.treeDataFactory.objById[item[this.inner_treeOptions.pId]];
+                    let children = p.children || p._children;
+
+                    let exChildrenIds = p._exChildren.filter((v) => v._sign == item._sign).map((v) => v[this.symbolKey]);
+                    if (item.level == this.defaultOpenLevel) {
+                        obj.parentNode = this.hierarchyLayoutData.find((v) => v.data[this.symbolKey] == p[this.symbolKey]);
+                        obj.exChildrenIds = exChildrenIds;
+                    }
+                    arrayRemoveItem(children, (v) => exChildrenIds.includes(v[this.symbolKey]));
+                }
+                if (obj.node) foldTargetNode.push(obj);
+            });
+            this.drawView();
+            if (foldTargetNode.length)
+                foldTargetNode.forEach(({ node: oldNode, parentNode, exChildrenIds }) => {
+                    let node = this.hierarchyLayoutData.find((v) => v.data[this.symbolKey] == oldNode.data[this.symbolKey]);
+                    this.foldLinksAndNodes(oldNode, node);
+                    // 若有限制节点，则需要收缩到父节点
+                    if (parentNode && exChildrenIds) {
+                        node = this.hierarchyLayoutData.find((v) => v.data[this.symbolKey] == parentNode.data[this.symbolKey]);
+                        this.foldLinksAndNodes(parentNode, node, (link) => {
+                            return exChildrenIds.includes(link.target.data[this.symbolKey]);
+                        });
+                    }
+                });
+            else this.foldLinksAndNodes(this.hierarchyLayoutData, this.hierarchyLayoutData);
+        },
         expendToNode(sourceData) {
             sourceData.track.forEach((id, index) => {
                 if (id != sourceData[this.symbolKey]) {
-                    let node = this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == id);
-                    // 设置动画起始节点
-                    if (isNonEmptyArray(node.data._children)) {
-                        if (!this.lastClickNode) this.lastClickNode = node;
+                    let node = this.treeDataFactory.objById[id]; // this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == id);
+                    if (!this.lastClickNode) {
+                        // 设置动画起始节点,即第一个折叠的节点
+                        if (isNonEmptyArray(node._children)) {
+                            this.lastClickNode = this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == id);
+                        }
                     }
-                    let selectionNode = this.svg.select(`#${this.getNodeId(id)}`);
                     // 展开节点
-                    if (isNonEmptyArray(node.data._children)) {
-                        selectionNode.classed('moon-hierarchy-node-expend', true);
-                        node.data.children = node.data._children;
-                        node.data._children = undefined;
+                    if (isNonEmptyArray(node._children)) {
+                        node.children = node._children;
+                        node._children = undefined;
                     }
                     if (index < sourceData.track.length - 1) {
                         // 若下个节点在_exChildren中时
                         let nextId = sourceData.track[index + 1];
-                        let children = node.data.children || node.data._children;
+                        let children = node.children || node._children;
                         // 若在限制收起节点中找到，则当前节点需要处于展开状态
-                        let ifInExChildren = node.data?._exChildren?.find((v) => v[this.symbolKey] == nextId);
+                        let ifInExChildren = node?._exChildren?.find((v) => v[this.symbolKey] == nextId);
                         if (ifInExChildren) {
                             // 找到同向的展开节点
                             let expendNode = children.find(
@@ -1045,14 +1108,14 @@ export default {
                                 children.splice(
                                     children.indexOf(expendNode),
                                     0,
-                                    ...node.data._exChildren.filter((v) => v._sign == expendNode._sign)
+                                    ...node._exChildren.filter((v) => v._sign == expendNode._sign)
                                 );
                             }
                         }
                     }
-                    this.drawView();
                 }
             });
+            this.drawView();
         },
         // 将画布中心移动到指定节点
         moveToNode(targetNodeId, eventList = []) {

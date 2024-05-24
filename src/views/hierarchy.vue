@@ -10,6 +10,9 @@
                 <button @click="$refs.hierarchy.moveToNode('qyfxsbpggl', ['click', 'contextmenu', 'move'])">
                     移动到指定节点，并触发contextmenu
                 </button>
+                <button @click="$refs.hierarchy.expendAllNode()">展开全部节点</button>
+                <button @click="$refs.hierarchy.foldAllNode()">折叠全部节点</button>
+
             </div>
             <div style="margin-top: 10px">
                 <input type="radio" id="h" value="h" v-model="mode" />
@@ -155,7 +158,6 @@ export default {
                             });
                         },
                         click: (e, d, el, svg) => {
-                            console.log('ddd', el.node());
                             if (typeof d.data._isexpend == 'boolean') return;
                             svg.selectAll('.active-node').classed('active-node', false);
                             el.classed('active-node', true);
@@ -265,8 +267,6 @@ export default {
                     name: 'g',
                     on: {
                         click: (e) => {
-                            console.log('plus click');
-
                             this.$refs.hierarchy.hiddenCustomView();
                         }
                     },

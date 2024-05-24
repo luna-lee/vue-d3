@@ -64,6 +64,12 @@ export default {
         },
         moveToNode(targetNodeId, eventList) {
             this.$refs.MoonHierarchy.moveToNode(targetNodeId, eventList);
+        },
+        expendAllNode() {
+            this.$refs.MoonHierarchy.expendAllNode();
+        },
+        foldAllNode() {
+            this.$refs.MoonHierarchy.foldAllNode();
         }
     }
 };
