@@ -416,23 +416,14 @@ export default {
             if (typeof sourceData._isexpend == 'boolean' && !canRemoveExpendNode) {
                 throw `moon-hierarchy组件：展开/收起节点不能手动删除！`;
             }
-            const selectionNode = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
-
-            // 移除子项
-            sourceData.trigger.forEach((subId) => {
-                this.svg.select(`#${this.getNodeId(subId)}`).remove();
+            
+            const node = this.hierarchyLayoutData.find((n) => n.data[this.symbolKey] == targetNodeId);
+            // 移除当前节点及其子节点,以及相关link
+            node.each((n) => {
+                this.svg.select(`#${this.getNodeId(n.data[this.symbolKey])}`).remove();
+                const id = this.getLinkId(n.parent.data[this.symbolKey], n.data[this.symbolKey]);
+                this.svg.select(`#${id}`).remove();
             });
-            // 移除当前节点及其子节点的相关link
-            const links = this.hierarchyLayoutData.links();
-            for (let i = 0; i < links.length; i++) {
-                let item = links[i];
-                let idList = [...sourceData.trigger, targetNodeId];
-                if (idList.includes(item.source.data[this.symbolKey]) || idList.includes(item.target.data[this.symbolKey])) {
-                    const id = this.getLinkId(item.source.data[this.symbolKey], item.target.data[this.symbolKey]);
-                    this.svg.select(`#${id}`).remove();
-                }
-            }
-            selectionNode.remove();
 
             // 处理父节点
             let parentNode = this.treeDataFactory.objById[sourceData[this.inner_treeOptions.pId]];
