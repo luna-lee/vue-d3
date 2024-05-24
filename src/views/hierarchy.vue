@@ -7,7 +7,9 @@
                 <button @click="$refs.hierarchy.zoom(0.5)">缩小</button>
                 <button @click="$refs.hierarchy.pauseZoom()">暂停缩放</button>
                 <button @click="$refs.hierarchy.continueZoom()">恢复缩放</button>
-                <button @click="$refs.hierarchy.expendToNode('qyfxsbpggl', ['click','contextmenu','move'])">展示到指定节点</button>
+                <button @click="$refs.hierarchy.moveToNode('qyfxsbpggl', ['click', 'contextmenu', 'move'])">
+                    移动到指定节点，并触发contextmenu
+                </button>
             </div>
             <div style="margin-top: 10px">
                 <input type="radio" id="h" value="h" v-model="mode" />
@@ -153,6 +155,7 @@ export default {
                             });
                         },
                         click: (e, d, el, svg) => {
+                            console.log('ddd', el.node());
                             if (typeof d.data._isexpend == 'boolean') return;
                             svg.selectAll('.active-node').classed('active-node', false);
                             el.classed('active-node', true);
@@ -160,7 +163,6 @@ export default {
                             this.$refs.hierarchy.hiddenCustomView();
                         },
                         contextmenu: (e, d, node, svg) => {
-                            console.log('contextmenu',node);
                             e.preventDefault();
                             this.currentNode = d.data;
                             this.$refs.hierarchy.showCustomView(e, d);
@@ -348,11 +350,11 @@ export default {
 </script>
 <style lang="scss" scoped>
 .moon-hierarchy {
+    background: #edf0fd;
     ul {
         margin: 0;
         padding: 0;
         list-style: none;
-        border: 1px solid;
     }
     li {
         display: list-item;

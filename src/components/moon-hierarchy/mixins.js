@@ -424,7 +424,7 @@ export default {
                 const id = this.getLinkId(n[this.inner_treeOptions.pId], n[this.symbolKey]);
                 this.svg.select(`#${id}`).remove();
             }
-            
+
             // 处理父节点
             let parentNode = this.treeDataFactory.objById[sourceData[this.inner_treeOptions.pId]];
             if (parentNode) {
@@ -655,7 +655,7 @@ export default {
             } else _sign = sourceData._sign;
 
             // 获取当前布局节点，
-            let node = this.hierarchyLayoutData.descendants().find((item) => item.data[this.symbolKey] == targetNodeId);
+            let node = this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == targetNodeId);
             // 设置新增节点动画的起点
             this.lastClickNode = node;
             // 不是数组时构造一个数组
@@ -993,7 +993,7 @@ export default {
                 const selectionNode = this.svg.select(`#${this.getNodeId(item.data[this.symbolKey])}`);
                 if (selectionNode.node()) {
                     let id = this.drawCustomViewLastConfig.d.data[this.symbolKey];
-                    let node = this.hierarchyLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
+                    let node = this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == id);
                     let { e, width, height, priority } = this.drawCustomViewLastConfig;
                     if (node) {
                         this.drawCustomView(e, node, width, height, priority);
@@ -1013,15 +1013,10 @@ export default {
                 this.foreignObject = null;
             }
         },
-        expendToNode(targetNodeId, eventList = []) {
-            if (!targetNodeId) throw `moon-hierarchy组件：请传入目标节点数据中${this.symbolKey}的值`;
-            const sourceData = this.treeDataFactory.objById[targetNodeId];
-            if (!sourceData) {
-                throw `moon-hierarchy组件：画布中没有匹配到${this.symbolKey}=${targetNodeId}的节点`;
-            }
+        expendToNode(sourceData) {
             sourceData.track.forEach((id, index) => {
-                if (id != targetNodeId) {
-                    let node = this.hierarchyLayoutData.descendants().find((item) => item.data[this.symbolKey] == id);
+                if (id != sourceData[this.symbolKey]) {
+                    let node = this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == id);
                     // 设置动画起始节点
                     if (isNonEmptyArray(node.data._children)) {
                         if (!this.lastClickNode) this.lastClickNode = node;
@@ -1058,14 +1053,31 @@ export default {
                     this.drawView();
                 }
             });
+        },
+        // 将画布中心移动到指定节点
+        moveToNode(targetNodeId, eventList = []) {
+            if (!targetNodeId) throw `moon-hierarchy组件：请传入目标节点数据中${this.symbolKey}的值`;
+            const sourceData = this.treeDataFactory.objById[targetNodeId];
+            if (!sourceData) {
+                throw `moon-hierarchy组件：画布中没有匹配到${this.symbolKey}=${targetNodeId}的节点`;
+            }
+
+            let selectionNode = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
+            // 若画布中没有指定节点。则使用expendToNode
+            if (!selectionNode.node()) {
+                this.expendToNode(sourceData);
+                selectionNode = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
+            }
+
+            let node = this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == sourceData[this.symbolKey]);
+            this.moveToCenter({
+                ...this.nodeToCenterXY(node),
+                d: this.duration
+            });
+
             eventList = this.formatToArray(eventList);
             // 触发指定事件
             if (eventList.length) {
-                let node = this.hierarchyLayoutData
-                    .descendants()
-                    .find((item) => item.data[this.symbolKey] == sourceData[this.symbolKey]);
-
-                let selectionNode = this.svg.select(`#${this.getNodeId(sourceData[this.symbolKey])}`);
                 eventList.forEach((event) => {
                     const _ = {
                         preventDefault() {}
@@ -1076,7 +1088,7 @@ export default {
                         return;
                     }
                     if (event == 'click') {
-                        this.onNodeClick(node);
+                        console.log('click');
                         this.nodeListener['click']?.(_, node, selectionNode, this.svg);
                         return;
                     }
@@ -1089,12 +1101,6 @@ export default {
                         this.onNodeMouseOut(node);
                         this.nodeListener['mouseout']?.(_, node, selectionNode, this.svg);
                         return;
-                    }
-                    if (event == 'move') {
-                        this.moveToCenter({
-                            ...this.nodeToCenterXY(node),
-                            d: this.duration
-                        });
                     }
                     this.nodeListener[event]?.(_, node, node, this.svg);
                 });

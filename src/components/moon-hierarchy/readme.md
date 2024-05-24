@@ -312,7 +312,7 @@ exShaps = [
 | continueZoom | 启动缩放功能 | ()=>void |
 | showCustomView | 显示slot对应的自定义的view视图,e:鼠标信息，d：布局节点信息，width，height，priority，duration：参考config.customView，优先级高于config.customView中的配置。 | (e, d, width, height, priority,duration)=>void |
 | hiddenCustomView | 隐藏slot对应的自定义的view视图, | ()=>void |
-| expendToNode | 展开到指定节点所在的层级,eventList指定触发节点事件。move事件将画布移动到指定节点。 | (targetNodeId:string,eventList:string[]\|string)=>void |
+| moveToNode | 展开到指定节点所在的层级,将节点移动到画布中间，并且可以触发eventList指定的节点事件。 | (targetNodeId:string,eventList:string[]\|string)=>void |
 
 
 
@@ -458,7 +458,7 @@ exShaps = [
                 <button @click="$refs.hierarchy.zoom(0.5)">缩小</button>
                 <button @click="$refs.hierarchy.pauseZoom()">暂停缩放</button>
                 <button @click="$refs.hierarchy.continueZoom()">恢复缩放</button>
-                <button @click="$refs.hierarchy.expendToNode('qyfxsbpggl', ['click','contextmenu','move'])">展示到指定节点</button>
+                <button @click="$refs.hierarchy.moveToNode('qyfxsbpggl', ['click','contextmenu','move'])">展示到指定节点</button>
             </div>
             <div style="margin-top: 10px">
                 <input type="radio" id="h" value="h" v-model="mode" />

@@ -268,9 +268,7 @@ export default {
             }
             this.drawView();
             // 找到重新计算后的node。
-            const afterCalcuNode = this.hierarchyLayoutData
-                .descendants()
-                .find((n) => n.data[symbolKey] == this.lastClickNode.data[symbolKey]);
+            const afterCalcuNode = this.hierarchyLayoutData.find((n) => n.data[symbolKey] == this.lastClickNode.data[symbolKey]);
             // 收起
             if (!sourceData._isexpend) {
                 // 若是isexpend节点，

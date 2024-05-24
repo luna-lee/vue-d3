@@ -62,8 +62,8 @@ export default {
         updateNodeByData(data) {
             this.$refs.MoonHierarchy.updateNodeByData(data);
         },
-        expendToNode(targetNodeId, eventList) {
-            this.$refs.MoonHierarchy.expendToNode(targetNodeId, eventList);
+        moveToNode(targetNodeId, eventList) {
+            this.$refs.MoonHierarchy.moveToNode(targetNodeId, eventList);
         }
     }
 };
