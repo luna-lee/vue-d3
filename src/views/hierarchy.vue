@@ -158,7 +158,6 @@ export default {
                             });
                         },
                         click: (e, d, el, svg) => {
-                            if (typeof d.data._isexpend == 'boolean') return;
                             svg.selectAll('.active-node').classed('active-node', false);
                             el.classed('active-node', true);
                             this.$emit('node-click', d.data);

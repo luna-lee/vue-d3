@@ -314,17 +314,26 @@ export default {
                 .on('click', (_, d) => {
                     _.stopPropagation();
                     this.onNodeClick(d);
+                    // 展开按钮不出外部设置事件
+                    if (typeof d.data._isexpend == 'boolean') return;
+
                     const id = this.getNodeId(d.data[this.symbolKey]);
                     const node = this.svg.select(`#${id}`);
                     this.nodeListener['click']?.(_, d, node, this.svg);
                 })
                 .on('mouseover', (_, d) => {
+                    // 展开按钮不出外部设置事件
+                    if (typeof d.data._isexpend == 'boolean') return;
+
                     this.onNodeMouseOver(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
                     const node = this.svg.select(`#${id}`);
                     this.nodeListener['mouseover']?.(_, d, node, this.svg);
                 })
                 .on('mouseout', (_, d) => {
+                    // 展开按钮不出外部设置事件
+                    if (typeof d.data._isexpend == 'boolean') return;
+
                     this.onNodeMouseOut(d);
                     const id = this.getNodeId(d.data[this.symbolKey]);
                     const node = this.svg.select(`#${id}`);
@@ -378,13 +387,19 @@ export default {
                     .on('click', (_) => {
                         _.stopPropagation();
                         this.onNodeClick(node);
+                        // 展开按钮不出外部设置事件
+                        if (typeof node.data._isexpend == 'boolean') return;
                         this.nodeListener['click']?.(_, node, selectionNode, this.svg);
                     })
                     .on('mouseover', (_) => {
+                        if (typeof node.data._isexpend == 'boolean') return;
+
                         this.onNodeMouseOver(node);
                         this.nodeListener['mouseover']?.(_, node, selectionNode, this.svg);
                     })
                     .on('mouseout', (_) => {
+                        if (typeof node.data._isexpend == 'boolean') return;
+
                         this.onNodeMouseOut(node);
                         this.nodeListener['mouseout']?.(_, node, selectionNode, this.svg);
                     })
@@ -795,8 +810,8 @@ export default {
                 }
 
                 const nodeId = getNodeId(link.target.data[symbolKey]);
-                this.svg
-                    .select(`#${nodeId}`)
+                const selectionNode = this.svg.select(`#${nodeId}`);
+                selectionNode
                     .transition()
                     .duration(this.duration)
                     .attr('transform', () => {
@@ -804,8 +819,9 @@ export default {
                     });
 
                 const linkId = getLinkId(link.source.data[symbolKey], link.target.data[symbolKey]);
-                this.svg
-                    .select(`#${linkId}`)
+                // 折叠连线后，将路径置空
+                const selectionLink = this.svg.select(`#${linkId}`);
+                selectionLink
                     .transition()
                     .duration(this.duration)
                     .attr('transform', () => {
@@ -1011,6 +1027,7 @@ export default {
             }
         },
         expendAllNode() {
+            this.lastClickNode = this.hierarchyLayoutData;
             this.treeDataFactory.flatData.forEach((item) => {
                 if (item._children) {
                     item.children = item._children;
