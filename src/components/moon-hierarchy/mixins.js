@@ -826,6 +826,9 @@ export default {
                     .duration(this.duration)
                     .attr('transform', () => {
                         return this.onNodeFoldTranslate(newNode, link.target);
+                    })
+                    .on('end', () => {
+                        selectionLink.attr('d', null);
                     });
             });
         },
@@ -1092,6 +1095,7 @@ export default {
                     }
                 });
             else this.foldLinksAndNodes(this.hierarchyLayoutData, this.hierarchyLayoutData);
+            this.moveToCenter()
         },
         expendToNode(sourceData) {
             sourceData.track.forEach((id, index) => {
