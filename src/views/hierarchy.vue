@@ -1,7 +1,7 @@
 <template>
     <div>
         <div class="pannel">
-            <div>
+            <div class="button-group">
                 <button @click="$refs.hierarchy.moveToCenter()">移动到中心</button>
                 <button @click="$refs.hierarchy.zoom(1.5)">放大</button>
                 <button @click="$refs.hierarchy.zoom(0.5)">缩小</button>
@@ -12,7 +12,6 @@
                 </button>
                 <button @click="$refs.hierarchy.expendAllNode()">展开全部节点</button>
                 <button @click="$refs.hierarchy.foldAllNode()">折叠全部节点</button>
-
             </div>
             <div style="margin-top: 10px">
                 <input type="radio" id="h" value="h" v-model="mode" />
@@ -436,8 +435,18 @@ export default {
         }
     }
 }
+.button-group {
+    display: flex;
+    gap: 10px;
+}
 .pannel {
+    left: 0;
+    top: 0;
+    padding: 10px;
+    box-sizing: border-box;
     position: absolute;
+    width: 100%;
+    background-color: rgba(250,250,250,0.5);
     label {
         cursor: pointer;
     }
@@ -446,8 +455,7 @@ export default {
         display: flex;
         flex-direction: column;
         align-items: flex-start;
-        border: 1px solid;
-        background-color: pink;
+        border-top: 1px solid;
         div {
             padding: 5px;
         }
