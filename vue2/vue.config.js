@@ -51,12 +51,14 @@ module.exports = {
                                 __dirname + '/src/components/moon-hierarchy/readme.md',
                                 path.join(outputPath, '../', 'readme.md')
                             );
+                            fs.copySync(__dirname + '/src/views/hierarchy.vue', path.join(outputPath, '../', 'demo.vue'));
+
                             fs.copySync(
                                 path.join(outputPath, 'moon-hierarchy.css'),
                                 path.join(outputPath, '../', 'moon-hierarchy.css')
                             );
                             let oldName = path.join(outputPath, 'moon-hierarchy.umd.min.js');
-                            let newName =  path.join(outputPath, 'moon-hierarchy.js');
+                            let newName = path.join(outputPath, 'moon-hierarchy.js');
                             if (fs.existsSync(oldName)) {
                                 fs.rename(oldName, newName);
                             }

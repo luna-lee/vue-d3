@@ -7,7 +7,7 @@
         "build": "vue-cli-service build",
         "cleanca": "npm cache clean --force",
         "build:package": "vue-cli-service build --target lib src/components/moon-hierarchy/index.vue  --name moon-hierarchy   --dest ../packages/vue2",
-        "publish": "cd ./packages && npm publish"
+        "publish": "cd ../packages && npm publish"
     },
     "dependencies": {
         "@kangc/v-md-editor": "^1.7.12",
