@@ -4,7 +4,7 @@
     </div>
 </template>
 <script>
-import { intersection } from 'lodash';
+import { intersection } from 'lodash-es';
 import mixins from './mixins';
 import * as d3 from 'd3';
 function isNonEmptyArray(arr) {

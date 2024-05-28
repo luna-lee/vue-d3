@@ -21,7 +21,7 @@ module.exports = {
             config.externals({
                 vue: 'Vue',
                 d3: 'd3',
-                lodash: 'lodash'
+                lodash: ’lodash-es‘
             });
             config.plugin('buildPackagePlugin').use({
                 apply(compiler) {
@@ -50,10 +50,6 @@ module.exports = {
                             fs.copySync(
                                 __dirname + '/src/components/moon-hierarchy/readme.md',
                                 path.join(outputPath, '../', 'readme.md')
-                            );
-                            fs.copySync(
-                                path.join(outputPath, 'moon-hierarchy.css'),
-                                path.join(outputPath, '../', 'moon-hierarchy.css')
                             );
                             let oldName = path.join(outputPath, 'moon-hierarchy.umd.min.js');
                             let newName = path.join(outputPath, 'moon-hierarchy.js');

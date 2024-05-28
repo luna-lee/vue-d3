@@ -5,7 +5,7 @@
 </template>
 <script>
 import { getUUID } from '@/utils.js';
-import { maxBy, intersection } from 'lodash';
+import { maxBy, intersection } from 'lodash-es';
 import mixins from './mixins';
 import * as d3 from 'd3';
 function isNonEmptyArray(arr) {

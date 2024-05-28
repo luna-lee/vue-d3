@@ -23,44 +23,6 @@ export const getUUID = (prefix = 'uuid') => {
 }
 
 /**
- * @description 设置window 或document事件监听,同时当所在的vue实例销毁时自动移除监听
- * @author 闰月飞鸟
- * @param binder 指定window 或document  必传
- * @param vm vue实例 必传
- * @param evtName  事件名 必传
- * @param listener  监听函数 必传
- * @param options 监听本身参数
- * @return 返回一个移除监听函数
- *  */
-export const setEventListener = (binder, vm, evtName, listener, options) => {
-  if (!binder || !vm || !evtName || !listener) {
-    return
-  }
-  // 只有在当前视图下的vm才触发响应
-  const _listener = (...arg) => {
-    let { width, height } = vm.$el.getBoundingClientRect()
-    if (!width || !height) return
-    listener(...arg)
-  }
-  const remove = () => {
-    binder.removeEventListener(evtName, _listener)
-  }
-  const add = () => {
-    remove()
-    binder.addEventListener(evtName, _listener, options)
-  }
-  add()
-  vm.$on('hook:mounted', add)
-  vm.$on('hook:activated', add)
-  vm.$on('hook:deactivated', remove)
-  vm.$once('hook:beforeDestroy', () => {
-    remove()
-  })
-  return remove
-}
- 
-
-/**
  * @description  树形数据格式化
  * @author 闰月飞鸟
  * @param {*} source
