@@ -59,9 +59,7 @@
   </div>
 </template>
 <script>
-  // import hierarchy from '@/components/moon-hierarchy/index.vue';
-  import hierarchy from '../packages/dist/moon-hierarchy.js';
-  import '../packages/dist/moon-hierarchy.css';
+  import hierarchy from '@/components/moon-hierarchy/index.vue';
 
   export default {
     inheritAttrs: false,
