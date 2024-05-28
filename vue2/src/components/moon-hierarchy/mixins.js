@@ -1095,7 +1095,7 @@ export default {
                     }
                 });
             else this.foldLinksAndNodes(this.hierarchyLayoutData, this.hierarchyLayoutData);
-            this.moveToCenter()
+            this.moveToCenter();
         },
         expendToNode(sourceData) {
             sourceData.track.forEach((id, index) => {
@@ -1145,15 +1145,14 @@ export default {
             if (!sourceData) {
                 throw `moon-hierarchy组件：画布中没有匹配到${this.symbolKey}=${targetNodeId}的节点`;
             }
+            let node = this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == sourceData[this.symbolKey]);
 
-            let selectionNode = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
             // 若画布中没有指定节点。则使用expendToNode
-            if (!selectionNode.node()) {
+            if (!node) {
                 this.expendToNode(sourceData);
-                selectionNode = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
+                node = this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == sourceData[this.symbolKey]);
             }
 
-            let node = this.hierarchyLayoutData.find((item) => item.data[this.symbolKey] == sourceData[this.symbolKey]);
             this.moveToCenter({
                 ...this.nodeToCenterXY(node),
                 d: this.duration
@@ -1162,6 +1161,7 @@ export default {
             eventList = this.formatToArray(eventList);
             // 触发指定事件
             if (eventList.length) {
+                let selectionNode = this.svg.select(`#${this.getNodeId(targetNodeId)}`);
                 eventList.forEach((event) => {
                     const _ = {
                         preventDefault() {}

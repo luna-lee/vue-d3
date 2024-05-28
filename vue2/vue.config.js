@@ -1,4 +1,6 @@
 const fs = require('fs-extra');
+const path = require('path');
+
 module.exports = {
     // transpileDependencies: ['vue-echarts', 'echarts', 'vue-amap', 'vue-pdf', 'vue-baidu-map', 'crypto-js'],
     publicPath: './',
@@ -47,9 +49,18 @@ module.exports = {
                             });
                             fs.copySync(
                                 __dirname + '/src/components/moon-hierarchy/readme.md',
-                                __dirname + '/packages/readme.md'
+                                path.join(outputPath, '../', 'readme.md')
                             );
-                        }, 3000);
+                            fs.copySync(
+                                path.join(outputPath, 'moon-hierarchy.css'),
+                                path.join(outputPath, '../', 'moon-hierarchy.css')
+                            );
+                            let oldName = path.join(outputPath, 'moon-hierarchy.umd.min.js');
+                            let newName =  path.join(outputPath, 'moon-hierarchy.js');
+                            if (fs.existsSync(oldName)) {
+                                fs.rename(oldName, newName);
+                            }
+                        }, 5000);
                     });
                 }
             });
