@@ -21,7 +21,7 @@ module.exports = {
             config.externals({
                 vue: 'Vue',
                 d3: 'd3',
-                lodash: ’lodash-es‘
+                'lodash-es': 'lodash-es'
             });
             config.plugin('buildPackagePlugin').use({
                 apply(compiler) {
