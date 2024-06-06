@@ -207,7 +207,7 @@ export default {
         },
 
         initLayoutData() {
-            this.addNodeWidthToData(this.treeDataFactory.treeData);
+            this.addNodeConfigToData(this.treeDataFactory.treeData);
             this.setLayoutData();
         },
         // 节点展开 动画
@@ -285,13 +285,13 @@ export default {
                 .separation(() => this.nodeConfig.separation)
                 .nodeSize(this.nodeConfig.nodeSize)(data);
         },
-        // 添加节点宽度,文字属性
-        addNodeWidthToData(list) {
+        // 添加节点配置,文字属性
+        addNodeConfigToData(list) {
             for (let i = 0; i < list.length; i++) {
                 let item = list[i];
-                item._nodeConfig = { ...this.nodeConfig, nodeWidth: this.nodeConfig.nodeWidth };
+                item._nodeConfig = { ...this.nodeConfig };
                 item['_' + this.inner_treeOptions.name] = this.getFormatTextArr(item);
-                if (isNonEmptyArray(item.children)) this.addNodeWidthToData(item.children);
+                if (isNonEmptyArray(item.children)) this.addNodeConfigToData(item.children);
             }
         },
 

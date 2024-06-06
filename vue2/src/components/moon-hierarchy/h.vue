@@ -237,7 +237,7 @@ export default {
                 });
         },
         initLayoutData() {
-            this.addNodeWidthToData(this.treeDataFactory.treeData);
+            this.addNodeConfigToData(this.treeDataFactory.treeData);
             this.addNodeOffset(this.treeDataFactory.treeData);
             this.setLayoutData();
         },
@@ -379,12 +379,12 @@ export default {
             modifyXY(layoutData.children || []);
             return layoutData;
         },
-        // 添加节点宽度属性
-        addNodeWidthToData(list) {
+        // 添加节点配置
+        addNodeConfigToData(list) {
             for (let i = 0; i < list.length; i++) {
                 let item = list[i];
                 item._nodeConfig = { ...this.nodeConfig, nodeWidth: this.getNodeWidth(item) };
-                if (isNonEmptyArray(item.children)) this.addNodeWidthToData(item.children);
+                if (isNonEmptyArray(item.children)) this.addNodeConfigToData(item.children);
             }
         },
         // 添加节点偏移量
