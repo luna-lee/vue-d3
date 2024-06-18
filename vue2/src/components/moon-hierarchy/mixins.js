@@ -281,7 +281,7 @@ export default {
         setNodeDefaultAttr(selectionNode) {
             const getNodeId = this.getNodeId;
             const symbolKey = this.symbolKey;
-            const lastClickNode = this.lastClickNode;
+            let lastClickNode = this.lastClickNode;
             const customNodeAttrs = this.config.node?.attrs || {};
             // 默认节点属性
             const nodeDefaultAttrs = {
@@ -289,6 +289,8 @@ export default {
                 ...customNodeAttrs,
                 id: (d) => getNodeId(d.data[symbolKey]),
                 transform: (d) => {
+                    // lastClickNode = this.getLastFoldNode(d.data);
+                    // console.log(lastClickNode,this.getLastFoldNode(d.data));
                     // 初始位置
                     return this.onNodeFoldTranslate(lastClickNode, d);
                 }
@@ -302,9 +304,12 @@ export default {
         },
         // 获取当前节点路径上，从根到叶方向上，第一个闭合即_children不为null的节点数据。需要判断是否在层级折叠中。若在则返回器对应的父节点，否则返回自己。
         getLastFoldNode(nodeData) {
-            let lastData = nodeData.track.find((id) => {
+            let lastDataId = nodeData.track.find((id) => {
                 return this.treeDataFactory.objById[id]._children && this.treeDataFactory.objById[id]._children.length;
             });
+            let lastData = null;
+            if (!lastDataId) return this.hierarchyLayoutData;
+            else lastData = this.treeDataFactory.objById[lastDataId];
             let parentData = this.treeDataFactory.objById[lastData[this.inner_treeOptions.pId]];
             // 若lastData在父节点的_exChildren中
             if (
@@ -314,7 +319,7 @@ export default {
             ) {
                 lastData = parentData;
             }
-            return this.hierarchyLayoutData.find((n) => n.data[symbolKey] == lastData[symbolKey]);
+            return this.hierarchyLayoutData.find((n) => n.data[this.symbolKey] == lastData[this.symbolKey]);
         },
         addNode(nodeList) {
             if (!this.nodesContainer)
