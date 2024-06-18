@@ -289,9 +289,6 @@ export default {
                 ...customNodeAttrs,
                 id: (d) => getNodeId(d.data[symbolKey]),
                 transform: (d) => {
-                    lastClickNode = this.getLastFoldNode(d.data);
-                    // console.log(lastClickNode,this.getLastFoldNode(d.data));
-                    // 初始位置
                     return this.onNodeFoldTranslate(lastClickNode, d);
                 }
             };
