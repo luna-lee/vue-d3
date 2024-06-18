@@ -27,7 +27,7 @@ export default {
         },
         duration: {
             type: Number,
-            default: 400
+            default: 4000
         },
         //蝴蝶模型，指定负向数据对应的id 必须是根节点的直接子节点
         negativeIds: {
@@ -299,6 +299,22 @@ export default {
             }, selectionNode);
 
             this.setNodeClassAttr(selectionNode);
+        },
+        // 获取当前节点路径上，从根到叶方向上，第一个闭合即_children不为null的节点数据。需要判断是否在层级折叠中。若在则返回器对应的父节点，否则返回自己。
+        getLastFoldNode(nodeData) {
+            let lastData = nodeData.track.find((id) => {
+                return this.treeDataFactory.objById[id]._children && this.treeDataFactory.objById[id]._children.length;
+            });
+            let parentData = this.treeDataFactory.objById[lastData[this.inner_treeOptions.pId]];
+            // 若lastData在父节点的_exChildren中
+            if (
+                parentData._exChildren &&
+                parentData._exChildren.length &&
+                parentData._exChildren.find((v) => v[this.symbolKey] == lastData[this.symbolKey])
+            ) {
+                lastData = parentData;
+            }
+            return this.hierarchyLayoutData.find((n) => n.data[symbolKey] == lastData[symbolKey]);
         },
         addNode(nodeList) {
             if (!this.nodesContainer)
