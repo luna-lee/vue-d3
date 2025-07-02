@@ -268,6 +268,8 @@ export default {
                 else arrayRemoveItem(classList, (item) => item == 'moon-hierarchy-node-expend');
                 if (isNonEmptyArray(d.data.children) || isNonEmptyArray(d.data._children) || d.data._hasChildren)
                     classList.push('moon-hierarchy-node-haschildren');
+                else arrayRemoveItem(classList, (item) => item == 'moon-hierarchy-node-haschildren');
+
                 let classContent = customNodeAttrs.class;
                 if (classContent) {
                     if (typeof classContent == 'function') {
@@ -609,13 +611,11 @@ export default {
             }
         },
         async onNodeExpendOrFold(node, expend = false) {
-            if (typeof this.canExpendFold == 'boolean' && !this.canExpendFold) return;
-            if (typeof this.canExpendFold == 'function' && !this.canExpendFold(sourceData)) return;
-
             const symbolKey = this.symbolKey;
             this.lastClickNode = node;
             const sourceData = this.treeDataFactory.objById[this.lastClickNode.data[symbolKey]];
-
+            if (typeof this.canExpendFold == 'boolean' && !this.canExpendFold) return;
+            if (typeof this.canExpendFold == 'function' && !this.canExpendFold(sourceData)) return;
             if (expend) {
                 // 展开
                 if (isNonEmptyArray(sourceData._children)) {
